@@ -47,16 +47,39 @@ app.use(pingRouter);
 app.use('/api', userRoutes);
 
 // Importar modelos para asegurarnos de que están registrados
-import './models/User';
+import User from './models/User';
+
+// Registrar todos los modelos para que Sequelize los conozca
+const models = {
+  User
+};
 
 // Conectar a la base de datos y sincronizar modelos al iniciar la aplicación
 connectDB()
   .then(async () => {
     try {
-      // Sincronizar modelos con la base de datos
-      // { alter: true } actualiza las tablas existentes si hay cambios en los modelos
-      await sequelize.sync({ alter: true });
-      console.log('Modelos sincronizados con la base de datos');
+      // En producción, solo sincronizamos si las tablas no existen
+      // En desarrollo, podemos alterar las tablas existentes
+      const syncOptions = process.env.NODE_ENV === 'production' 
+        ? { force: false } // No forzar recreación de tablas en producción
+        : { alter: true }; // Permitir alteraciones en desarrollo
+      
+      console.log(`Sincronizando modelos con opciones: ${JSON.stringify(syncOptions)}`);
+      await sequelize.sync(syncOptions);
+      console.log('Modelos sincronizados con la base de datos correctamente');
+      
+      // Crear usuario admin por defecto si no existe ninguno
+      const adminCount = await User.count({ where: { role: 'admin' } });
+      if (adminCount === 0) {
+        console.log('Creando usuario administrador por defecto...');
+        await User.create({
+          name: 'Administrador',
+          email: 'admin@retailtrack.com',
+          password: 'admin123', // Se hará hash automáticamente por el hook
+          role: 'admin'
+        });
+        console.log('Usuario administrador creado correctamente');
+      }
     } catch (error) {
       console.error('Error al sincronizar modelos:', error);
     }
