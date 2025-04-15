@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import pingRouter from './routes/ping';
+import userRoutes from './routes/users';
 import { connectDB } from './config/database';
 import { testDatabaseConnection } from './utils/dbTest';
 
@@ -43,6 +44,7 @@ app.get('/db-test', async (req: Request, res: Response) => {
 
 // Rutas
 app.use(pingRouter);
+app.use('/api', userRoutes);
 
 // Conectar a la base de datos al iniciar la aplicación
 connectDB().catch(err => {
