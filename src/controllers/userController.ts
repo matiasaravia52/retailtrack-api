@@ -1,179 +1,137 @@
-import { Request, Response } from 'express';
-import User from '../models/User';
-import { Op } from 'sequelize';
+import { Request, Response, NextFunction } from 'express';
+import { UserService } from '../services/UserService';
+import { UserRepository } from '../repositories/UserRepository';
+import { validateCreateUserDto, validateUpdateUserDto } from '../dto/UserDto';
+import { ApiError } from '../middleware/errorHandler';
 
-// Obtener todos los usuarios
-export const getUsers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const users = await User.findAll({
-      attributes: { exclude: ['password'] } // Excluir el campo de contraseña
-    });
-    res.json(users);
-  } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-    res.status(500).json({ message: 'Error al obtener usuarios', error });
-  }
-};
+const userRepository = new UserRepository();
+const userService = new UserService(userRepository);
 
-// Obtener un usuario por ID
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const user = await User.findByPk(id, {
-      attributes: { exclude: ['password'] }
-    });
-
-    if (!user) {
-      res.status(404).json({ message: 'Usuario no encontrado' });
-      return;
+export class UserController {
+  static async getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const users = await userService.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      next(error);
     }
-
-    res.json(user);
-  } catch (error) {
-    console.error(`Error al obtener usuario con ID ${req.params.id}:`, error);
-    res.status(500).json({ message: 'Error al obtener usuario', error });
   }
-};
 
-// Crear un nuevo usuario
-export const createUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { name, email, password, role } = req.body;
+  static async getUserById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = await userService.getUserById(id);
 
-    // Validar datos requeridos
-    if (!name || !email || !password) {
-      res.status(400).json({ message: 'Nombre, email y contraseña son requeridos' });
-      return;
+      if (!user) {
+        next(ApiError.notFound('User not found'));
+        return;
+      }
+
+      res.json(user);
+    } catch (error) {
+      next(error);
     }
-
-    // Verificar si el email ya existe
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      res.status(400).json({ message: 'El email ya está registrado' });
-      return;
-    }
-
-    // Crear el usuario
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'employee', // Valor por defecto si no se proporciona
-      lastLogin: null
-    });
-
-    // Responder con el usuario creado (sin la contraseña)
-    const userResponse = user.toJSON();
-    const { password: _, ...userWithoutPassword } = userResponse;
-    
-    res.status(201).json(userWithoutPassword);
-  } catch (error) {
-    console.error('Error al crear usuario:', error);
-    res.status(500).json({ message: 'Error al crear usuario', error });
   }
-};
 
-// Actualizar un usuario
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { name, email, role, password } = req.body;
+  static async createUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const validation = validateCreateUserDto(req.body);
+      if (!validation.isValid) {
+        next(ApiError.badRequest(validation.errors.join(', ')));
+        return;
+      }
 
-    // Buscar el usuario
-    const user = await User.findByPk(id);
-    if (!user) {
-      res.status(404).json({ message: 'Usuario no encontrado' });
-      return;
+      const user = await userService.createUser(req.body);
+      res.status(201).json(user);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Email already registered') {
+        next(ApiError.conflict(error.message));
+      } else {
+        next(error);
+      }
     }
-
-    // Actualizar los campos proporcionados
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (role) user.role = role;
-    if (password) user.password = password;
-
-    // Guardar los cambios
-    await user.save();
-
-    // Responder con el usuario actualizado (sin la contraseña)
-    const userResponse = user.toJSON();
-    const { password: _, ...userWithoutPassword } = userResponse;
-    
-    res.json(userWithoutPassword);
-  } catch (error) {
-    console.error(`Error al actualizar usuario con ID ${req.params.id}:`, error);
-    res.status(500).json({ message: 'Error al actualizar usuario', error });
   }
-};
 
-// Eliminar un usuario
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
+  static async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      
+      const validation = validateUpdateUserDto(req.body);
+      if (!validation.isValid) {
+        next(ApiError.badRequest(validation.errors.join(', ')));
+        return;
+      }
 
-    // Buscar el usuario
-    const user = await User.findByPk(id);
-    if (!user) {
-      res.status(404).json({ message: 'Usuario no encontrado' });
-      return;
+      const user = await userService.updateUser(id, req.body);
+      
+      if (!user) {
+        next(ApiError.notFound('User not found'));
+        return;
+      }
+
+      res.json(user);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Email already registered') {
+        next(ApiError.conflict(error.message));
+      } else {
+        next(error);
+      }
     }
-
-    // Eliminar el usuario
-    await user.destroy();
-    
-    res.json({ message: 'Usuario eliminado correctamente' });
-  } catch (error) {
-    console.error(`Error al eliminar usuario con ID ${req.params.id}:`, error);
-    res.status(500).json({ message: 'Error al eliminar usuario', error });
   }
-};
 
-// Buscar usuarios
-export const searchUsers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { query } = req.query;
-    
-    if (!query) {
-      res.status(400).json({ message: 'Se requiere un término de búsqueda' });
-      return;
+  static async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const deleted = await userService.deleteUser(id);
+
+      if (!deleted) {
+        next(ApiError.notFound('User not found'));
+        return;
+      }
+
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      next(error);
     }
-
-    const users = await User.findAll({
-      where: {
-        [Op.or]: [
-          { name: { [Op.iLike]: `%${query}%` } },
-          { email: { [Op.iLike]: `%${query}%` } }
-        ]
-      },
-      attributes: { exclude: ['password'] }
-    });
-
-    res.json(users);
-  } catch (error) {
-    console.error('Error al buscar usuarios:', error);
-    res.status(500).json({ message: 'Error al buscar usuarios', error });
   }
-};
 
-// Actualizar la fecha de último login
-export const updateLastLogin = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
+  static async searchUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const query = req.query.query as string;
+      
+      if (!query) {
+        next(ApiError.badRequest('Search term is required'));
+        return;
+      }
 
-    // Buscar el usuario
-    const user = await User.findByPk(id);
-    if (!user) {
-      res.status(404).json({ message: 'Usuario no encontrado' });
-      return;
+      const users = await userService.searchUsers(query);
+      res.json(users);
+    } catch (error) {
+      next(error);
     }
-
-    // Actualizar la fecha de último login
-    user.lastLogin = new Date();
-    await user.save();
-
-    res.json({ message: 'Fecha de último login actualizada correctamente' });
-  } catch (error) {
-    console.error(`Error al actualizar último login del usuario con ID ${req.params.id}:`, error);
-    res.status(500).json({ message: 'Error al actualizar último login', error });
   }
-};
+
+  static async updateLastLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const updated = await userService.updateLastLogin(id);
+
+      if (!updated) {
+        next(ApiError.notFound('User not found'));
+        return;
+      }
+
+      res.json({ message: 'Last login date updated successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+export const getUsers = UserController.getUsers;
+export const getUserById = UserController.getUserById;
+export const createUser = UserController.createUser;
+export const updateUser = UserController.updateUser;
+export const deleteUser = UserController.deleteUser;
+export const searchUsers = UserController.searchUsers;
+export const updateLastLogin = UserController.updateLastLogin;

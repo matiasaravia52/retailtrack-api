@@ -1,67 +1,63 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize, Options as SequelizeOptions } from 'sequelize';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production';
+const environment = isProduction ? 'Production' : 'Development';
 
-// Configuración para Railway
 const databaseUrl = process.env.DATABASE_URL;
-
-// Imprimir información de depuración
-console.log(`Entorno: ${isProduction ? 'Producción' : 'Desarrollo'}`);
-console.log(`DATABASE_URL disponible: ${databaseUrl ? 'Sí' : 'No'}`);
-
-if (!databaseUrl && isProduction) {
-  console.error('ERROR: No se encontró DATABASE_URL en el entorno de producción');
-}
-
-// URL por defecto para desarrollo local
 const defaultUrl = 'postgres://postgres:postgres@localhost:5432/retailtrack-api';
+const connectionUrl = databaseUrl || defaultUrl;
 
-// Configuración de Sequelize
-export const sequelize = new Sequelize(databaseUrl || defaultUrl, {
+const sequelizeOptions: SequelizeOptions = {
   dialect: 'postgres',
   logging: isProduction ? false : console.log,
   dialectOptions: {
     ssl: isProduction ? {
       require: true,
-      rejectUnauthorized: false // Necesario para Railway
+      rejectUnauthorized: false
     } : false
   },
   pool: {
-    max: 5, // máximo de conexiones en el pool
-    min: 0, // mínimo de conexiones en el pool
-    acquire: 30000, // tiempo máximo en ms para obtener una conexión antes de lanzar error
-    idle: 10000 // tiempo máximo en ms que una conexión puede estar inactiva antes de ser liberada
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
   }
-});
+};
 
-const connectDB = async (): Promise<void> => {
+export const sequelize = new Sequelize(connectionUrl, sequelizeOptions);
+
+export const syncOptions = isProduction 
+  ? { force: false } 
+  : { alter: true };
+
+export const connectDB = async (): Promise<void> => {
   try {
-    console.log('Intentando conectar a PostgreSQL...');
-    await sequelize.authenticate();
-    console.log('PostgreSQL Connected Successfully!');
+    console.log(`Environment: ${environment}`);
+    console.log(`DATABASE_URL available: ${databaseUrl ? 'Yes' : 'No'}`);
     
-    // Sincronizar modelos con la base de datos
-    console.log('Sincronizando modelos con la base de datos...');
-    await sequelize.sync({ alter: true });
-    console.log('Modelos sincronizados con la base de datos correctamente');
-  } catch (error: unknown) {
-    // Manejar el error correctamente para TypeScript
-    if (error instanceof Error) {
-      console.error(`Error de conexión a la base de datos: ${error.message}`);
-      console.error('Detalles adicionales:', error);
-    } else {
-      console.error('Error desconocido al conectar a la base de datos');
+    if (!databaseUrl && isProduction) {
+      console.warn('WARNING: DATABASE_URL not found in production environment');
     }
     
-    // En producción, es mejor no terminar el proceso inmediatamente
+    console.log('Attempting to connect to PostgreSQL...');
+    await sequelize.authenticate();
+    console.log('PostgreSQL Connected Successfully!');
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(`Database connection error: ${error.message}`);
+      console.error('Additional details:', error);
+    } else {
+      console.error('Unknown error connecting to database');
+    }
+    
     if (!isProduction) {
       process.exit(1);
     }
   }
 };
 
-export { connectDB };
+export { isProduction, environment };
+

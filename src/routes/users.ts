@@ -1,15 +1,19 @@
 import express, { Router } from 'express';
-import * as userController from '../controllers/userController';
+import { UserController } from '../controllers/userController';
 
 const router: Router = express.Router();
 
-// Rutas para usuarios
-router.get('/users', userController.getUsers);
-router.get('/users/:id', userController.getUserById);
-router.post('/users', userController.createUser);
-router.put('/users/:id', userController.updateUser);
-router.delete('/users/:id', userController.deleteUser);
-router.get('/users/search', userController.searchUsers);
-router.put('/users/:id/last-login', userController.updateLastLogin);
+router.route('/users')
+  .get(UserController.getUsers)
+  .post(UserController.createUser);
+
+router.get('/users/search', UserController.searchUsers);
+
+router.route('/users/:id')
+  .get(UserController.getUserById)
+  .put(UserController.updateUser)
+  .delete(UserController.deleteUser);
+
+router.put('/users/:id/last-login', UserController.updateLastLogin);
 
 export default router;

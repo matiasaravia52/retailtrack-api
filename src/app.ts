@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import pingRouter from './routes/ping';
 import userRoutes from './routes/users';
-import { connectDB, sequelize } from './config/database';
+import { connectDB, sequelize, syncOptions } from './config/database';
 import { testDatabaseConnection } from './utils/dbTest';
 
 dotenv.config();
@@ -42,52 +42,27 @@ app.get('/db-test', async (req: Request, res: Response) => {
   }
 });
 
-// Rutas
 app.use(pingRouter);
 app.use('/api', userRoutes);
 
-// Importar modelos para asegurarnos de que están registrados
-import User from './models/User';
+import './models/User';
+import { errorHandler } from './middleware/errorHandler';
 
-// Registrar todos los modelos para que Sequelize los conozca
-const models = {
-  User
-};
-
-// Conectar a la base de datos y sincronizar modelos al iniciar la aplicación
 connectDB()
   .then(async () => {
     try {
-      // En producción, solo sincronizamos si las tablas no existen
-      // En desarrollo, podemos alterar las tablas existentes
-      const syncOptions = process.env.NODE_ENV === 'production' 
-        ? { force: false } // No forzar recreación de tablas en producción
-        : { alter: true }; // Permitir alteraciones en desarrollo
-      
-      console.log(`Sincronizando modelos con opciones: ${JSON.stringify(syncOptions)}`);
+      console.log(`Syncing models with options: ${JSON.stringify(syncOptions)}`);
       await sequelize.sync(syncOptions);
-      console.log('Modelos sincronizados con la base de datos correctamente');
-      
-      // Crear usuario admin por defecto si no existe ninguno
-      const adminCount = await User.count({ where: { role: 'admin' } });
-      if (adminCount === 0) {
-        console.log('Creando usuario administrador por defecto...');
-        await User.create({
-          name: 'Administrador',
-          email: 'admin@retailtrack.com',
-          password: 'admin123', // Se hará hash automáticamente por el hook
-          role: 'admin'
-        });
-        console.log('Usuario administrador creado correctamente');
-      }
+      console.log('Models synced with database successfully');
     } catch (error) {
-      console.error('Error al sincronizar modelos:', error);
+      console.error('Error syncing models:', error);
     }
   })
   .catch(err => {
-    console.error('Error al conectar con la base de datos al iniciar:', err);
-    // No terminamos el proceso para permitir que la aplicación siga funcionando
-    // y pueda intentar reconectarse más tarde
+    console.error('Error connecting to database on startup:', err);
   });
+
+// Registrar el middleware de manejo de errores (debe ser el último middleware)
+app.use(errorHandler);
 
 export default app;
