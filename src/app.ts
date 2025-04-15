@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import pingRouter from './routes/ping';
 import userRoutes from './routes/users';
-import { connectDB } from './config/database';
+import { connectDB, sequelize } from './config/database';
 import { testDatabaseConnection } from './utils/dbTest';
 
 dotenv.config();
@@ -46,11 +46,25 @@ app.get('/db-test', async (req: Request, res: Response) => {
 app.use(pingRouter);
 app.use('/api', userRoutes);
 
-// Conectar a la base de datos al iniciar la aplicación
-connectDB().catch(err => {
-  console.error('Error al conectar con la base de datos al iniciar:', err);
-  // No terminamos el proceso para permitir que la aplicación siga funcionando
-  // y pueda intentar reconectarse más tarde
-});
+// Importar modelos para asegurarnos de que están registrados
+import './models/User';
+
+// Conectar a la base de datos y sincronizar modelos al iniciar la aplicación
+connectDB()
+  .then(async () => {
+    try {
+      // Sincronizar modelos con la base de datos
+      // { alter: true } actualiza las tablas existentes si hay cambios en los modelos
+      await sequelize.sync({ alter: true });
+      console.log('Modelos sincronizados con la base de datos');
+    } catch (error) {
+      console.error('Error al sincronizar modelos:', error);
+    }
+  })
+  .catch(err => {
+    console.error('Error al conectar con la base de datos al iniciar:', err);
+    // No terminamos el proceso para permitir que la aplicación siga funcionando
+    // y pueda intentar reconectarse más tarde
+  });
 
 export default app;

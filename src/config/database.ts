@@ -1,17 +1,18 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
+import { getDatabaseUrl } from '../utils/railwayConfig';
 
 dotenv.config();
 
 // Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Imprimir información de depuración (sin mostrar credenciales)
-const dbUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/retailtrack-api';
+// Obtener la URL de la base de datos optimizada para Railway
+const dbUrl = getDatabaseUrl();
 console.log(`Conectando a la base de datos en: ${isProduction ? 'entorno de producción' : 'entorno local'}`);
 
 // Configuración de Sequelize
-const sequelize = new Sequelize(dbUrl, {
+export const sequelize = new Sequelize(dbUrl, {
   dialect: 'postgres',
   logging: isProduction ? false : console.log,
   dialectOptions: {
@@ -54,4 +55,4 @@ const connectDB = async (): Promise<void> => {
   }
 };
 
-export { sequelize, connectDB };
+export { connectDB };
