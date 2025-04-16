@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import pingRouter from './routes/ping';
 import userRoutes from './routes/users';
+import authRoutes from './routes/auth';
 import { connectDB, sequelize, syncOptions } from './config/database';
 import { testDatabaseConnection } from './utils/dbTest';
 
@@ -44,6 +45,7 @@ app.get('/db-test', async (req: Request, res: Response) => {
 
 app.use(pingRouter);
 app.use('/api', userRoutes);
+app.use('/api', authRoutes);
 
 import './models/User';
 import { errorHandler } from './middleware/errorHandler';
