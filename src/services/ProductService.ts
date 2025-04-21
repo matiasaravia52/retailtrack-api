@@ -21,7 +21,8 @@ export class ProductService implements IProductService {
     const product = new Product();
     product.name = productData.name;
     product.description = productData.description;
-    return this.productRepository.create(product);
+    const createdProduct = await this.productRepository.create(product);
+    return createdProduct;
   }
 
   async updateProduct(id: string, productData: CreateProductDto): Promise<Product> {
