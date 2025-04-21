@@ -11,17 +11,22 @@ export class ProductRepository implements IProductRepository {
     return Product.findByPk(id);
   }
 
-  async create(product: Product): Promise<Product> {
-    await product.save();
-    return product;
+  async create(product: { name: string; description: string }): Promise<Product> {
+    return Product.create({
+      name: product.name,
+      description: product.description
+    });
   }
 
-  async update(id: string, product: Product): Promise<Product> {
+  async update(id: string, product: { name: string; description: string }): Promise<Product> {
     const existingProduct = await this.findById(id);
     if (!existingProduct) {
       throw new Error('Product not found');
     }
-    await existingProduct.update(product);
+    await existingProduct.update({
+      name: product.name,
+      description: product.description
+    });
     return existingProduct;
   }
 
