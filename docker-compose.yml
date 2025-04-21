@@ -1,8 +1,7 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: node:18
+    container_name: retailtrack-api
     ports:
       - "3000:3000"
     environment:

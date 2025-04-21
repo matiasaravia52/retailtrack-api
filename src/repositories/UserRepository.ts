@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import User from '../models/User';
-import { IUserRepository } from '../interfaces/IUserRepository';
+import { IUserRepository } from '../interfaces/repository/IUserRepository';
 
 /**
  * Implementación del repositorio de usuarios usando Sequelize

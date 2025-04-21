@@ -1,5 +1,5 @@
-import { IUserService } from '../interfaces/IUserService';
-import { IUserRepository } from '../interfaces/IUserRepository';
+import { IUserService } from '../interfaces/service/IUserService';
+import { IUserRepository } from '../interfaces/repository/IUserRepository';
 import User from '../models/User';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserDto';
 
