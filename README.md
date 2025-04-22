@@ -20,10 +20,12 @@ npm install
 npm run dev
 ```
 
-
 ## Producción
 
 ```bash
 npm run build
 npm start
+
+
+
 ```
