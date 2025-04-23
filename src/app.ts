@@ -5,8 +5,14 @@ import pingRouter from './routes/ping';
 import userRoutes from './routes/users';
 import authRoutes from './routes/auth';
 import productRoutes from './routes/products';
+import roleRoutes from './routes/roleRoutes';
+import permissionRoutes from './routes/permissionRoutes';
+import userRoleRoutes from './routes/userRoleRoutes';
 import { connectDB, sequelize, syncOptions } from './config/database';
 import { testDatabaseConnection } from './utils/dbTest';
+import './models/index';
+import { errorHandler } from './middleware/errorHandler';
+import { seedRolesAndPermissions } from './utils/seedRolesAndPermissions';
 
 dotenv.config();
 
@@ -48,9 +54,10 @@ app.use(pingRouter);
 app.use('/api', userRoutes);
 app.use('/api', authRoutes);
 app.use('/api', productRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/permissions', permissionRoutes);
+app.use('/api/users', userRoleRoutes);
 
-import './models/User';
-import { errorHandler } from './middleware/errorHandler';
 
 connectDB()
   .then(async () => {
@@ -58,8 +65,12 @@ connectDB()
       console.log(`Syncing models with options: ${JSON.stringify(syncOptions)}`);
       await sequelize.sync(syncOptions);
       console.log('Models synced with database successfully');
+      
+      // Inicializar roles y permisos predeterminados
+      await seedRolesAndPermissions();
+      console.log('Roles y permisos inicializados correctamente');
     } catch (error) {
-      console.error('Error syncing models:', error);
+      console.error('Error syncing models or seeding data:', error);
     }
   })
   .catch(err => {
