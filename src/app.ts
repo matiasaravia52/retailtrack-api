@@ -9,8 +9,6 @@ import roleRoutes from './routes/roleRoutes';
 import permissionRoutes from './routes/permissionRoutes';
 import userRoleRoutes from './routes/userRoleRoutes';
 import { connectDB, sequelize, syncOptions } from './config/database';
-import { testDatabaseConnection } from './utils/dbTest';
-import './models/index';
 import { errorHandler } from './middleware/errorHandler';
 import { seedRolesAndPermissions } from './utils/seedRolesAndPermissions';
 
@@ -33,22 +31,6 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// Ruta para probar la conexión a la base de datos
-app.get('/db-test', async (req: Request, res: Response) => {
-  try {
-    await testDatabaseConnection();
-    res.json({ 
-      status: 'ok', 
-      message: 'Conexión a la base de datos establecida correctamente' 
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Error al conectar con la base de datos',
-      error: error instanceof Error ? error.message : 'Error desconocido'
-    });
-  }
-});
 
 app.use(pingRouter);
 app.use('/api', userRoutes);
