@@ -7,6 +7,12 @@ interface ProductAttributes {
   description: string;
   createdAt?: Date;
   updatedAt?: Date;
+  cost: number;
+  wholesale_price: number;
+  retail_price: number;
+  image: string;
+  unit_measurement: string;
+  sku: string;
 }
   
 interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
@@ -17,6 +23,12 @@ class Product extends Model<ProductAttributes, ProductCreationAttributes> implem
   public description!: string;
   public createdAt?: Date;
   public updatedAt?: Date;
+  public cost!: number;
+  public wholesale_price!: number;
+  public retail_price!: number;
+  public image!: string;
+  public unit_measurement!: string;
+  public sku!: string;
 }
 
 Product.init({
@@ -31,6 +43,30 @@ Product.init({
     allowNull: false
   },
   description: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  cost: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  wholesale_price: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  retail_price: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  image: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  unit_measurement: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  sku: {
     type: DataTypes.TEXT,
     allowNull: false
   }
