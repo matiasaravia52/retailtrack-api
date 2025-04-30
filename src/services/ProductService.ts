@@ -21,6 +21,12 @@ export class ProductService implements IProductService {
     const product = new Product();
     product.name = productData.name;
     product.description = productData.description;
+    product.cost = productData.cost;
+    product.wholesale_price = productData.wholesale_price;
+    product.retail_price = productData.retail_price;
+    product.image = productData.image;
+    product.unit_measurement = productData.unit_measurement;
+    product.sku = productData.sku;
     const createdProduct = await this.productRepository.create(product);
     return createdProduct;
   }

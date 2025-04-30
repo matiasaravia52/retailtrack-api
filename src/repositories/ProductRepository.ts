@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import Product from '../models/Product';
 import { IProductRepository } from '../interfaces/repository/IProductRepository';
+import { CreateProductDto } from '../dto/ProductDto';
 
 export class ProductRepository implements IProductRepository {
   async findAll(): Promise<Product[]> {
@@ -11,21 +12,33 @@ export class ProductRepository implements IProductRepository {
     return Product.findByPk(id);
   }
 
-  async create(product: { name: string; description: string }): Promise<Product> {
+  async create(product: CreateProductDto): Promise<Product> {
     return Product.create({
       name: product.name,
-      description: product.description
+      description: product.description,
+      cost: product.cost,
+      wholesale_price: product.wholesale_price,
+      retail_price: product.retail_price,
+      image: product.image,
+      unit_measurement: product.unit_measurement,
+      sku: product.sku
     });
   }
 
-  async update(id: string, product: { name: string; description: string }): Promise<Product> {
+  async update(id: string, product: CreateProductDto): Promise<Product> {
     const existingProduct = await this.findById(id);
     if (!existingProduct) {
       throw new Error('Product not found');
     }
     await existingProduct.update({
       name: product.name,
-      description: product.description
+      description: product.description,
+      cost: product.cost,
+      wholesale_price: product.wholesale_price,
+      retail_price: product.retail_price,
+      image: product.image,
+      unit_measurement: product.unit_measurement,
+      sku: product.sku
     });
     return existingProduct;
   }
