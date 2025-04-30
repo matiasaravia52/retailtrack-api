@@ -4,14 +4,10 @@ import { authMiddleware } from '../middleware';
 
 const router = express.Router();
 
-// Rutas protegidas (requieren autenticación)
-router.use(authMiddleware);
-
-// Rutas para permisos
-router.get('/', PermissionController.getAllPermissions);
-router.get('/:id', PermissionController.getPermissionById);
-router.post('/', PermissionController.createPermission);
-router.put('/:id', PermissionController.updatePermission);
-router.delete('/:id', PermissionController.deletePermission);
+router.get('/', authMiddleware, PermissionController.getAllPermissions);
+router.get('/:id', authMiddleware, PermissionController.getPermissionById);
+router.post('/', authMiddleware, PermissionController.createPermission);
+router.put('/:id', authMiddleware, PermissionController.updatePermission);
+router.delete('/:id', authMiddleware, PermissionController.deletePermission);
 
 export default router;
