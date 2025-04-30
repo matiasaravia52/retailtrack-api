@@ -1,17 +1,18 @@
 import express, { Router } from 'express';
 import { ProductController } from '../controllers/productController';
+import { authMiddleware } from '../middleware';
 
 const router: Router = express.Router();
 
 router.route('/products')
-  .get(ProductController.getAllProducts)
-  .post(ProductController.createProduct);
+  .get(authMiddleware, ProductController.getAllProducts)
+  .post(authMiddleware, ProductController.createProduct);
 
-router.get('/products/search', ProductController.searchProducts);
+router.get('/products/search', authMiddleware, ProductController.searchProducts);
 
 router.route('/products/:id')
-  .get(ProductController.getProductById)
-  .put(ProductController.updateProduct)
-  .delete(ProductController.deleteProduct);
+  .get(authMiddleware, ProductController.getProductById)
+  .put(authMiddleware, ProductController.updateProduct)
+  .delete(authMiddleware, ProductController.deleteProduct);
 
 export default router;
