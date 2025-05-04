@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import Product from '../models/Product';
+import Product, { ProductStatus } from '../models/Product';
 import { IProductRepository } from '../interfaces/repository/IProductRepository';
 import { CreateProductDto } from '../dto/ProductDto';
 
@@ -21,7 +21,9 @@ export class ProductRepository implements IProductRepository {
       retail_price: product.retail_price,
       image: product.image,
       unit_measurement: product.unit_measurement,
-      sku: product.sku
+      sku: product.sku,
+      stock: product.stock,
+      status: product.status || ProductStatus.ACTIVE
     });
   }
 
@@ -38,7 +40,8 @@ export class ProductRepository implements IProductRepository {
       retail_price: product.retail_price,
       image: product.image,
       unit_measurement: product.unit_measurement,
-      sku: product.sku
+      sku: product.sku,
+      stock: product.stock
     });
     return existingProduct;
   }
