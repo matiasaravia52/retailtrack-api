@@ -50,6 +50,7 @@ app.use('/api', authRoutes);
 app.use('/api', productRoutes);
 
 import './models/User';
+import './models/Category';
 import { errorHandler } from './middleware/errorHandler';
 
 connectDB()
