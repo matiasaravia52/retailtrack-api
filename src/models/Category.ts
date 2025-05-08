@@ -19,6 +19,7 @@ class Category extends Model<CategoryAttributes, CategoryCreationAttributes> imp
   public updatedAt?: Date;
 }
 
+
 Category.init({
   id: {
     type: DataTypes.UUID,
