@@ -33,6 +33,39 @@ export const syncOptions = isProduction
   ? { force: false } 
   : { alter: true };
 
+// Función para agregar restricciones UNIQUE después de sincronizar los modelos
+export const addUniqueConstraints = async (): Promise<void> => {
+  try {
+    // Agregar restricción UNIQUE a la columna sku de la tabla products
+    await sequelize.query(
+      'ALTER TABLE IF EXISTS products ADD CONSTRAINT IF NOT EXISTS products_sku_unique UNIQUE (sku);'
+    );
+    
+    // Agregar restricción UNIQUE a la columna barcode de la tabla products (si existe)
+    await sequelize.query(
+      'ALTER TABLE IF EXISTS products ADD CONSTRAINT IF NOT EXISTS products_barcode_unique UNIQUE (barcode);'
+    );
+    
+    console.log('Restricciones UNIQUE agregadas correctamente');
+  } catch (error) {
+    console.error('Error al agregar restricciones UNIQUE:', error);
+  }
+};
+
+// Función para sincronizar los modelos con la base de datos
+export const syncModels = async (): Promise<void> => {
+  try {
+    console.log(`Syncing models with options: ${JSON.stringify(syncOptions)}`);
+    await sequelize.sync(syncOptions);
+    console.log('Models synced with database successfully');
+    
+    // Agregar restricciones UNIQUE después de sincronizar
+    await addUniqueConstraints();
+  } catch (error) {
+    console.error('Error syncing models:', error);
+  }
+};
+
 export const connectDB = async (): Promise<void> => {
   try {
     console.log(`Environment: ${environment}`);

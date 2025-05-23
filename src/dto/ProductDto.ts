@@ -1,3 +1,5 @@
+import { ProductStatus } from '../models/Product';
+
 export interface CreateProductDto {
   name: string;
   description: string;
@@ -7,6 +9,11 @@ export interface CreateProductDto {
   image: string;
   unit_measurement: string;
   sku: string;
+  stock: number;
+  status?: ProductStatus;
+  categoryId?: string;
+  barcode?: string;
+  minStock?: number;
 }
 
 export interface UpdateProductDto {
@@ -18,6 +25,11 @@ export interface UpdateProductDto {
   image?: string;
   unit_measurement?: string;
   sku?: string;
+  stock?: number;
+  status?: ProductStatus;
+  categoryId?: string;
+  barcode?: string;
+  minStock?: number;
 }
 
 export const validateCreateProductDto = (data: any): { isValid: boolean; errors: string[] } => {
@@ -54,6 +66,10 @@ export const validateCreateProductDto = (data: any): { isValid: boolean; errors:
   if (data.sku == undefined) {
     errors.push('Sku is required');
   }
+  
+  if (data.stock == undefined) {
+    errors.push('Stock is required');
+  }
 
   return { isValid: errors.length === 0, errors };
 };
@@ -68,7 +84,8 @@ export const validateUpdateProductDto = (data: any): { isValid: boolean; errors:
     data.retail_price === undefined &&
     data.image === undefined &&
     data.unit_measurement === undefined &&
-    data.sku === undefined) {
+    data.sku === undefined &&
+    data.stock === undefined) {
     errors.push('At least one field must be provided for update');
     return { isValid: false, errors };
   }

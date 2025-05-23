@@ -18,16 +18,8 @@ export class ProductService implements IProductService {
   }
 
   async createProduct(productData: CreateProductDto): Promise<Product> {
-    const product = new Product();
-    product.name = productData.name;
-    product.description = productData.description;
-    product.cost = productData.cost;
-    product.wholesale_price = productData.wholesale_price;
-    product.retail_price = productData.retail_price;
-    product.image = productData.image;
-    product.unit_measurement = productData.unit_measurement;
-    product.sku = productData.sku;
-    const createdProduct = await this.productRepository.create(product);
+    // Usar directamente el DTO en lugar de crear una instancia de Product
+    const createdProduct = await this.productRepository.create(productData);
     return createdProduct;
   }
 
@@ -36,9 +28,8 @@ export class ProductService implements IProductService {
     if (!product) {
       throw new Error('Product not found');
     }
-    product.name = productData.name;
-    product.description = productData.description;
-    return this.productRepository.update(id, product);
+    // Usar directamente el DTO en lugar de modificar la instancia de Product
+    return this.productRepository.update(id, productData);
   }
 
   async deleteProduct(id: string): Promise<void> {
