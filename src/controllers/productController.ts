@@ -1,26 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
-import { ProductService } from '../services/ProductService';
+import { IProductService } from '../interfaces/service/IProductService';
 import { ProductRepository } from '../repositories/ProductRepository';
 import { validateCreateProductDto, validateUpdateProductDto } from '../dto/ProductDto';
 import { ApiError } from '../middleware/errorHandler';
 
-const productRepository = new ProductRepository();
-const productService = new ProductService(productRepository);
 
 export class ProductController {
-  static async getAllProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+  constructor(private productService: IProductService) {}
+
+  async getAllProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const products = await productService.getAllProducts();
+      const products = await this.productService.getAllProducts();
       res.json(products);
     } catch (error) {
       next(error);
     }
   }
 
-  static async getProductById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getProductById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const product = await productService.getProductById(id);
+      const product = await this.productService.getProductById(id);
       if (!product) {
         throw new ApiError('Product not found', 404);
       }
@@ -30,7 +31,7 @@ export class ProductController {
     }
   }
     
-  static async createProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async createProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const validation = validateCreateProductDto(req.body);
       if (!validation.isValid) {
@@ -38,14 +39,14 @@ export class ProductController {
         return;
       }
 
-      const product = await productService.createProduct(req.body);
+      const product = await this.productService.createProduct(req.body);
       res.status(201).json(product);
     } catch (error) {
       next(error);
     }
   }
     
-  static async updateProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const validation = validateUpdateProductDto(req.body);
@@ -53,7 +54,7 @@ export class ProductController {
         next(ApiError.badRequest(validation.errors.join(', ')));
         return;
       }
-      const product = await productService.updateProduct(id, req.body);
+      const product = await this.productService.updateProduct(id, req.body);
       if (!product) {
         throw new ApiError('Product not found', 404);
       }
@@ -63,17 +64,17 @@ export class ProductController {
     }
   }
     
-  static async deleteProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      await productService.deleteProduct(id);
+      await this.productService.deleteProduct(id);
       res.status(204).send();
     } catch (error) {
       next(error);
     }
   }
     
-  static async searchProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async searchProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query.query as string;
       
@@ -82,7 +83,7 @@ export class ProductController {
         return;
       }
 
-      const products = await productService.searchProducts(query);
+      const products = await this.productService.searchProducts(query);
       res.json(products);
     } catch (error) {
       next(error);
