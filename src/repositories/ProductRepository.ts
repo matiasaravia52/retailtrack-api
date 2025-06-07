@@ -16,13 +16,6 @@ export class ProductRepository implements IProductRepository {
     return Product.create({
       name: product.name,
       description: product.description,
-      cost: product.cost,
-      wholesale_price: product.wholesale_price,
-      retail_price: product.retail_price,
-      image: product.image,
-      unit_measurement: product.unit_measurement,
-      sku: product.sku,
-      stock: product.stock,
       status: product.status || ProductStatus.ACTIVE
     });
   }
@@ -35,13 +28,6 @@ export class ProductRepository implements IProductRepository {
     await existingProduct.update({
       name: product.name,
       description: product.description,
-      cost: product.cost,
-      wholesale_price: product.wholesale_price,
-      retail_price: product.retail_price,
-      image: product.image,
-      unit_measurement: product.unit_measurement,
-      sku: product.sku,
-      stock: product.stock
     });
     return existingProduct;
   }

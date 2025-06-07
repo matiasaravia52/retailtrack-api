@@ -1,6 +1,6 @@
 import { Transaction } from 'sequelize';
 import { PriceHistory, Product } from '../models';
-import { PriceType } from '../models/PriceHistory';
+import { PriceType } from '../models/SalePrice';
 import { sequelize } from '../config/database';
 
 interface PriceHistoryData {

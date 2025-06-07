@@ -1,40 +1,39 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 import Product from './Product';
-import User from './User';
 
 // Tipos de precios
 export enum PriceType {
-  COST = 'cost',
   RETAIL = 'retail',
   WHOLESALE = 'wholesale'
 }
 
+export enum PriceStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive'
+}
+
 // Definir los atributos del historial de precios
-interface PriceHistoryAttributes {
+interface SalePriceAttributes {
   id: string;
   productId: string;
-  priceType: PriceType;
-  value: number;
-  startDate: Date;
-  endDate: Date | null;
-  userId: string;
+  type: PriceType;
+  amount: number;
+  status: PriceStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 // Definir los atributos opcionales para la creación
-interface PriceHistoryCreationAttributes extends Optional<PriceHistoryAttributes, 'id' | 'endDate' | 'createdAt' | 'updatedAt'> {}
+interface SalePriceCreationAttributes extends Optional<SalePriceAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
 // Definir el modelo de Historial de Precios
-class PriceHistory extends Model<PriceHistoryAttributes, PriceHistoryCreationAttributes> implements PriceHistoryAttributes {
+class SalePrice extends Model<SalePriceAttributes, SalePriceCreationAttributes> implements SalePriceAttributes {
   public id!: string;
   public productId!: string;
-  public priceType!: PriceType;
-  public value!: number;
-  public startDate!: Date;
-  public endDate!: Date | null;
-  public userId!: string;
+  public type!: PriceType;
+  public amount!: number;
+  public status!: PriceStatus;
   
   // Timestamps
   public readonly createdAt!: Date;
@@ -42,7 +41,7 @@ class PriceHistory extends Model<PriceHistoryAttributes, PriceHistoryCreationAtt
 }
 
 // Inicializar el modelo
-PriceHistory.init(
+SalePrice.init(
   {
     id: {
       type: DataTypes.UUID,
@@ -60,47 +59,30 @@ PriceHistory.init(
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
     },
-    priceType: {
+    type: {
       type: DataTypes.ENUM(...Object.values(PriceType)),
       allowNull: false,
       field: 'price_type'
     },
-    value: {
+    amount: {
       type: DataTypes.FLOAT,
       allowNull: false,
       validate: {
         min: { args: [0], msg: 'El precio no puede ser negativo' }
       }
     },
-    startDate: {
-      type: DataTypes.DATE,
+    status: {
+      type: DataTypes.ENUM(...Object.values(PriceStatus)),
       allowNull: false,
-      field: 'start_date',
-      defaultValue: DataTypes.NOW
+      field: 'price_status'
     },
-    endDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      field: 'end_date'
-    },
-    userId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      field: 'user_id',
-      references: {
-        model: User,
-        key: 'id'
-      },
-      onDelete: 'RESTRICT',
-      onUpdate: 'CASCADE'
-    }
   },
   {
     sequelize,
-    modelName: 'PriceHistory',
-    tableName: 'price_history',
+    modelName: 'SalePrice',
+    tableName: 'sale_prices',
     timestamps: true
   }
 );
 
-export default PriceHistory;
+export default SalePrice;

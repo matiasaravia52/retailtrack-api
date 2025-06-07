@@ -4,10 +4,11 @@ import Permission from './Permission';
 import UserRole from './UserRole';
 import RolePermission from './RolePermission';
 import Product from './Product';
-import Inventory from './Inventory';
-import PriceHistory from './PriceHistory';
+import PriceHistory from './SalePrice';
 import Sale from './Sale';
 import SaleItem from './SaleItem';
+import StockMovements from './StockMovements';
+import Batch from './Batch';
 
 // Definir las asociaciones entre modelos
 
@@ -41,49 +42,39 @@ Permission.belongsToMany(Role, {
   as: 'roles'
 });
 
-// Asociaciones Product-Inventory (uno a muchos)
-Product.hasMany(Inventory, {
+// Asociaciones Product-Batch (uno a muchos)
+Product.hasMany(Batch, {
   foreignKey: 'productId',
-  as: 'inventoryMovements'
+  as: 'batches'
 });
 
-Inventory.belongsTo(Product, {
-  foreignKey: 'productId',
-  as: 'product'
-});
-
-// Asociaciones User-Inventory (uno a muchos)
-User.hasMany(Inventory, {
-  foreignKey: 'userId',
-  as: 'inventoryMovements'
-});
-
-Inventory.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
-});
-
-// Asociaciones Product-PriceHistory (uno a muchos)
-Product.hasMany(PriceHistory, {
-  foreignKey: 'productId',
-  as: 'priceHistory'
-});
-
-PriceHistory.belongsTo(Product, {
+Batch.belongsTo(Product, {
   foreignKey: 'productId',
   as: 'product'
 });
 
-// Asociaciones User-PriceHistory (uno a muchos)
-User.hasMany(PriceHistory, {
-  foreignKey: 'userId',
-  as: 'priceChanges'
+// Asociaciones Product-StockMovements (uno a muchos)
+Product.hasMany(StockMovements, {
+  foreignKey: 'productId',
+  as: 'stockMovements'
 });
 
-PriceHistory.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
+StockMovements.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product'
 });
+
+// Asociaciones Batch-StockMovements (uno a muchos)
+Batch.hasMany(StockMovements, {
+  foreignKey: 'batchId',
+  as: 'stockMovements'
+});
+
+StockMovements.belongsTo(Batch, {
+  foreignKey: 'batchId',
+  as: 'batch'
+});
+
 
 // Asociaciones User-Sale (uno a muchos)
 User.hasMany(Sale, {
@@ -125,7 +116,6 @@ export {
   UserRole,
   RolePermission,
   Product,
-  Inventory,
   PriceHistory,
   Sale,
   SaleItem
