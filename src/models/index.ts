@@ -9,6 +9,11 @@ import Sale from './Sale';
 import SaleItem from './SaleItem';
 import StockMovements from './StockMovements';
 import Batch from './Batch';
+import Category from './Category';
+import Customer from './Customer';
+import Supplier from './Supplier';
+import Purchase from './Purchase';
+import PurchaseLine from './PurchaseLine';
 
 // Definir las asociaciones entre modelos
 
@@ -109,6 +114,72 @@ SaleItem.belongsTo(Product, {
   as: 'product'
 });
 
+// Asociaciones Category-Product (uno a muchos)
+Category.hasMany(Product, {
+  foreignKey: 'categoryId',
+  as: 'products'
+});
+
+Product.belongsTo(Category, {
+  foreignKey: 'categoryId',
+  as: 'category'
+});
+
+// Asociaciones Customer-Sale (uno a muchos)
+Customer.hasMany(Sale, {
+  foreignKey: 'customerId',
+  as: 'sales'
+});
+
+Sale.belongsTo(Customer, {
+  foreignKey: 'customerId',
+  as: 'customer'
+});
+
+// Asociaciones Supplier-Purchase (uno a muchos)
+Supplier.hasMany(Purchase, {
+  foreignKey: 'supplierId',
+  as: 'purchases'
+});
+
+Purchase.belongsTo(Supplier, {
+  foreignKey: 'supplierId',
+  as: 'supplier'
+});
+
+// Asociaciones Purchase-PurchaseLine (uno a muchos)
+Purchase.hasMany(PurchaseLine, {
+  foreignKey: 'purchaseId',
+  as: 'purchaseLines'
+});
+
+PurchaseLine.belongsTo(Purchase, {
+  foreignKey: 'purchaseId',
+  as: 'purchase'
+});
+
+// Asociaciones Product-PurchaseLine (uno a muchos)
+Product.hasMany(PurchaseLine, {
+  foreignKey: 'productId',
+  as: 'purchaseLines'
+});
+
+PurchaseLine.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product'
+});
+
+// Asociaciones Batch-PurchaseLine (uno a muchos)
+Batch.hasMany(PurchaseLine, {
+  foreignKey: 'batchId',
+  as: 'purchaseLines'
+});
+
+PurchaseLine.belongsTo(Batch, {
+  foreignKey: 'batchId',
+  as: 'batch'
+});
+
 export {
   User,
   Role,
@@ -118,5 +189,12 @@ export {
   Product,
   PriceHistory,
   Sale,
-  SaleItem
+  SaleItem,
+  StockMovements,
+  Batch,
+  Category,
+  Customer,
+  Supplier,
+  Purchase,
+  PurchaseLine
 };
