@@ -12,6 +12,10 @@ import { connectDB, syncModels } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import { seedRolesAndPermissions } from './utils/seedRolesAndPermissions';
 import batchRoutes from './routes/batchRoutes';
+import categoryRoutes from './routes/categoryRoutes';
+import customerRoutes from './routes/customerRoutes';
+import supplierRoutes from './routes/supplierRoutes';
+import purchaseRoutes from './routes/purchaseRoutes';
 
 dotenv.config();
 
@@ -41,6 +45,10 @@ app.use('/api', batchRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/users', userRoleRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/purchases', purchaseRoutes);
 
 connectDB()
   .then(async () => {
