@@ -16,6 +16,9 @@ export async function seedRolesAndPermissions() {
 
     // Crear permisos predeterminados
     const permissions = [
+      // Permiso de dashboard
+      { name: 'dashboard:view', description: 'Ver dashboard' },
+      
       // Permisos de usuarios
       { name: 'users:view', description: 'Ver usuarios' },
       { name: 'users:create', description: 'Crear usuarios' },
@@ -42,6 +45,24 @@ export async function seedRolesAndPermissions() {
       { name: 'sales:view', description: 'Ver ventas' },
       { name: 'sales:create', description: 'Crear ventas' },
       { name: 'sales:reports', description: 'Ver reportes de ventas' },
+      
+      // Permisos de clientes
+      { name: 'customers:view', description: 'Ver clientes' },
+      { name: 'customers:create', description: 'Crear clientes' },
+      { name: 'customers:edit', description: 'Editar clientes' },
+      { name: 'customers:delete', description: 'Eliminar clientes' },
+      
+      // Permisos de proveedores
+      { name: 'suppliers:view', description: 'Ver proveedores' },
+      { name: 'suppliers:create', description: 'Crear proveedores' },
+      { name: 'suppliers:edit', description: 'Editar proveedores' },
+      { name: 'suppliers:delete', description: 'Eliminar proveedores' },
+      
+      // Permisos de compras
+      { name: 'purchases:view', description: 'Ver compras' },
+      { name: 'purchases:create', description: 'Crear compras' },
+      { name: 'purchases:edit', description: 'Editar compras' },
+      { name: 'purchases:delete', description: 'Eliminar compras' },
       
       // Permisos de roles y permisos
       { name: 'roles:view', description: 'Ver roles' },
@@ -79,20 +100,28 @@ export async function seedRolesAndPermissions() {
       
       // Gerente tiene la mayoría de los permisos, excepto gestión de roles/permisos y eliminación de usuarios
       manager: [
+        'dashboard:view',
         'users:view', 'users:create', 'users:edit',
         'products:view', 'products:create', 'products:edit', 'products:delete',
         'categories:view', 'categories:create', 'categories:edit', 'categories:delete',
         'inventory:view', 'inventory:manage',
         'sales:view', 'sales:create', 'sales:reports',
+        'customers:view', 'customers:create', 'customers:edit', 'customers:delete',
+        'suppliers:view', 'suppliers:create', 'suppliers:edit', 'suppliers:delete',
+        'purchases:view', 'purchases:create', 'purchases:edit',
         'roles:view', 'permissions:view'
       ],
       
       // Empleado tiene permisos básicos
       employee: [
+        'dashboard:view',
         'products:view',
         'categories:view',
         'inventory:view',
-        'sales:view', 'sales:create'
+        'sales:view', 'sales:create',
+        'customers:view',
+        'suppliers:view',
+        'purchases:view'
       ]
     };
 

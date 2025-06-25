@@ -10,7 +10,8 @@
     "test": "jest",
     "db:up": "docker compose -f docker-compose.db.yml up -d",
     "db:down": "docker compose -f docker-compose.db.yml down",
-    "dev:local": "npm run db:up && npm run dev"
+    "dev:local": "npm run db:up && npm run dev",
+    "seed": "ts-node src/scripts/runSeed.ts"
   },
   "keywords": [],
   "author": "",
