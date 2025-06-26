@@ -21,7 +21,10 @@ export class BatchService implements IBatchService {
     async createBatch(batchData: CreateBatchDto): Promise<Batch> {
         const transaction = await sequelize.transaction();
         try {
+            // Crear el lote
             const batch = await this.batchRepository.create(batchData, { transaction });
+            
+            // Registrar el movimiento de stock
             await this.stockMovementRepository.create({
                 productId: batchData.productId,
                 batchId: batch.id,
@@ -29,6 +32,13 @@ export class BatchService implements IBatchService {
                 quantity: batchData.initialQuantity,
                 unitCost: batchData.unitCost
             }, { transaction });
+            
+            // Actualizar el stock total del producto
+            const product = await sequelize.models.Product.findByPk(batchData.productId, { transaction });
+            if (product) {
+                await product.increment('stock', { by: batchData.initialQuantity, transaction });
+            }
+            
             await transaction.commit();
             return batch;
         } catch (error) {

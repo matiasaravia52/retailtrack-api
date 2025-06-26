@@ -1,19 +1,19 @@
 import { Transaction } from 'sequelize';
-import { Sale, SaleItem, Product, Inventory } from '../models';
+import { Sale, SaleItem, Product, Batch } from '../models';
 import { SaleStatus, SaleType } from '../models/Sale';
-import { InventoryMovementType, InventoryReason } from '../models/Inventory';
 import { sequelize } from '../config/database';
-import { InventoryService } from './inventoryService';
+import { Op } from 'sequelize';
+import { StockMovementType } from '../models/StockMovements';
 
 interface SaleItemData {
   productId: string;
   quantity: number;
-  unitPrice: number;
+  unitPrice?: number;
   discount?: number;
 }
 
 interface SaleData {
-  userId: string;
+  userId?: string;
   clientName: string;
   clientDocument?: string;
   clientPhone?: string;
@@ -67,7 +67,7 @@ export class SaleService {
       } = data;
       
       // Validar datos básicos
-      if (!userId || !clientName || !items || items.length === 0) {
+      if (!clientName || !items || items.length === 0) {
         await transaction.rollback();
         return {
           success: false,
@@ -93,13 +93,25 @@ export class SaleService {
           };
         }
         
+        // Obtener los lotes disponibles del producto ordenados por fecha de creación (FIFO)
+        const availableBatches = await Batch.findAll({
+          where: {
+            productId: item.productId,
+            availableQuantity: { [Op.gt]: 0 }
+          },
+          order: [['createdAt', 'ASC']]
+        });
+        
+        // Calcular el stock total disponible
+        const totalAvailable = availableBatches.reduce((sum, batch) => sum + batch.availableQuantity, 0);
+        
         // Verificar stock suficiente
-        if (product.stock < item.quantity) {
+        if (totalAvailable < item.quantity) {
           insufficientStock.push({
             productId: item.productId,
             productName: product.name,
             requested: item.quantity,
-            available: product.stock
+            available: totalAvailable
           });
           continue;
         }
@@ -135,6 +147,16 @@ export class SaleService {
       // Calcular el total
       const totalAmount = subtotal + taxAmount - discountAmount;
       
+      // Validar que exista un userId
+      if (!userId) {
+        await transaction.rollback();
+        return {
+          success: false,
+          error: 'Se requiere un usuario para crear la venta',
+          statusCode: 400
+        };
+      }
+      
       // Crear la venta
       const sale = await Sale.create({
         date: new Date(),
@@ -158,37 +180,59 @@ export class SaleService {
       const saleItems = [];
       
       for (const item of itemsWithDetails) {
-        // Crear el item de venta
-        const saleItem = await SaleItem.create({
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          unitCost: item.unitCost,
-          discount: item.discount,
-          totalPrice: item.totalPrice
-        }, { transaction });
+        // Obtener los lotes disponibles del producto ordenados por fecha de creación (FIFO)
+        const availableBatches = await Batch.findAll({
+          where: {
+            productId: item.productId,
+            availableQuantity: { [Op.gt]: 0 }
+          },
+          order: [['createdAt', 'ASC']],
+          transaction
+        });
         
-        saleItems.push(saleItem);
+        let remainingQuantity = item.quantity;
+        let quantityFromBatch = 0;
         
-        // Actualizar el stock del producto
-        const product = await Product.findByPk(item.productId);
+        // Distribuir la cantidad entre los lotes disponibles (FIFO)
+        for (const batch of availableBatches) {
+          if (remainingQuantity <= 0) break;
+          
+          // Determinar cuánto tomar de este lote
+          quantityFromBatch = Math.min(remainingQuantity, batch.availableQuantity);
+          
+          // Crear el item de venta asociado a este lote
+          const saleItem = await SaleItem.create({
+            saleId: sale.id,
+            productId: item.productId,
+            batchId: batch.id,
+            quantity: quantityFromBatch,
+            unitPrice: item.unitPrice,
+            unitCost: batch.unitCost, // Usar el costo del lote específico
+            discount: item.discount,
+            totalPrice: quantityFromBatch * item.unitPrice * (1 - (item.discount || 0) / 100)
+          }, { transaction });
+          
+          saleItems.push(saleItem);
+          
+          // Actualizar la cantidad disponible en el lote
+          await batch.decrement('availableQuantity', { by: quantityFromBatch, transaction });
+          
+          // Registrar el movimiento de stock
+          await sequelize.models.StockMovements.create({
+            productId: item.productId,
+            batchId: batch.id,
+            type: StockMovementType.OUT,
+            quantity: quantityFromBatch,
+            unitCost: batch.unitCost
+          }, { transaction });
+          
+          remainingQuantity -= quantityFromBatch;
+        }
+        
+        // Actualizar el stock total del producto
+        const product = await Product.findByPk(item.productId, { transaction });
         if (product) {
           await product.decrement('stock', { by: item.quantity, transaction });
-          
-          // Registrar el movimiento de inventario
-          await Inventory.create({
-            productId: item.productId,
-            userId,
-            quantity: item.quantity,
-            movementType: InventoryMovementType.OUTPUT,
-            reason: InventoryReason.SALE,
-            unitCost: item.unitCost,
-            totalCost: item.quantity * item.unitCost,
-            notes: `Venta #${sale.id}`,
-            documentReference: sale.id,
-            referenceId: sale.id
-          }, { transaction });
         }
       }
       
@@ -268,7 +312,7 @@ export class SaleService {
       }
       
       if (clientName) {
-        filter.clientName = { $iLike: `%${clientName}%` };
+        filter.clientName = { [Op.like]: `%${clientName}%` };
       }
       
       if (status && Object.values(SaleStatus).includes(status)) {
@@ -284,11 +328,11 @@ export class SaleService {
         filter.date = {};
         
         if (startDate) {
-          filter.date.$gte = new Date(startDate);
+          filter.date[Op.gte] = new Date(startDate);
         }
         
         if (endDate) {
-          filter.date.$lte = new Date(endDate);
+          filter.date[Op.lte] = new Date(endDate);
         }
       }
       
@@ -331,7 +375,7 @@ export class SaleService {
       // Buscar la venta
       const sale = await Sale.findByPk(id, {
         include: [{ association: 'items' }]
-      }) as SaleWithItems | null;
+      });
       
       if (!sale) {
         await transaction.rollback();
@@ -341,6 +385,9 @@ export class SaleService {
           statusCode: 404
         };
       }
+      
+      // Convertir a SaleWithItems
+      const saleWithItems = sale as unknown as SaleWithItems;
       
       // Verificar si la venta ya está cancelada
       if (sale.status === SaleStatus.CANCELLED) {
@@ -355,26 +402,28 @@ export class SaleService {
       // Actualizar el estado de la venta
       await sale.update({ status: SaleStatus.CANCELLED }, { transaction });
       
-      // Restaurar el stock de los productos
-      for (const item of (sale as SaleWithItems).items) {
-        // Actualizar el stock del producto
-        const product = await Product.findByPk(item.productId);
+      // Restaurar el stock de los productos y lotes
+      for (const item of saleWithItems.items) {
+        // Obtener el lote asociado a este ítem de venta
+        const batch = await Batch.findByPk(item.batchId, { transaction });
+        if (batch) {
+          // Restaurar la cantidad al lote
+          await batch.increment('availableQuantity', { by: item.quantity, transaction });
+          
+          // Registrar el movimiento de stock (entrada por cancelación)
+          await sequelize.models.StockMovements.create({
+            productId: item.productId,
+            batchId: item.batchId,
+            type: StockMovementType.IN,
+            quantity: item.quantity,
+            unitCost: item.unitCost
+          }, { transaction });
+        }
+        
+        // Actualizar el stock total del producto
+        const product = await Product.findByPk(item.productId, { transaction });
         if (product) {
           await product.increment('stock', { by: item.quantity, transaction });
-          
-          // Registrar el movimiento de inventario (entrada por cancelación)
-          await Inventory.create({
-            productId: item.productId,
-            userId,
-            quantity: item.quantity,
-            movementType: InventoryMovementType.INPUT,
-            reason: InventoryReason.RETURN,
-            unitCost: item.unitCost,
-            totalCost: item.quantity * item.unitCost,
-            notes: `Cancelación de venta #${sale.id}`,
-            documentReference: sale.id,
-            referenceId: sale.id
-          }, { transaction });
         }
       }
       

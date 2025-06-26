@@ -16,7 +16,12 @@ export class ProductRepository implements IProductRepository {
     return Product.create({
       name: product.name,
       description: product.description,
-      status: product.status || ProductStatus.ACTIVE
+      status: product.status || ProductStatus.ACTIVE,
+      categoryId: product.categoryId || null,
+      stock: product.stock || 0,
+      cost: product.cost || 0,
+      retail_price: product.retail_price || 0,
+      wholesale_price: product.wholesale_price || 0
     });
   }
 
@@ -25,10 +30,19 @@ export class ProductRepository implements IProductRepository {
     if (!existingProduct) {
       throw new Error('Product not found');
     }
-    await existingProduct.update({
-      name: product.name,
-      description: product.description,
-    });
+    
+    const updateData: any = {};
+    
+    if (product.name !== undefined) updateData.name = product.name;
+    if (product.description !== undefined) updateData.description = product.description;
+    if (product.status !== undefined) updateData.status = product.status;
+    if (product.categoryId !== undefined) updateData.categoryId = product.categoryId;
+    if (product.stock !== undefined) updateData.stock = product.stock;
+    if (product.cost !== undefined) updateData.cost = product.cost;
+    if (product.retail_price !== undefined) updateData.retail_price = product.retail_price;
+    if (product.wholesale_price !== undefined) updateData.wholesale_price = product.wholesale_price;
+    
+    await existingProduct.update(updateData);
     return existingProduct;
   }
 

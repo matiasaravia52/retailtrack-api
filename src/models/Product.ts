@@ -12,6 +12,10 @@ interface ProductAttributes {
   name: string;
   description: string;
   categoryId?: string | null;
+  stock: number;
+  cost: number;
+  retail_price: number;
+  wholesale_price: number;
   status: ProductStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -24,6 +28,10 @@ class Product extends Model<ProductAttributes, ProductCreationAttributes> implem
   public name!: string;
   public description!: string;
   public categoryId!: string | null;
+  public stock!: number;
+  public cost!: number;
+  public retail_price!: number;
+  public wholesale_price!: number;
   public status!: ProductStatus;
   public createdAt?: Date;
   public updatedAt?: Date;
@@ -49,6 +57,28 @@ Product.init({
     allowNull: true,
     field: 'category_id',
     defaultValue: null
+  },
+  stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  cost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  retail_price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'retail_price'
+  },
+  wholesale_price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'wholesale_price'
   },
   status: {
     type: DataTypes.ENUM(...Object.values(ProductStatus)),
