@@ -6,7 +6,6 @@ export interface CreateProductDto {
   status?: ProductStatus;
   categoryId?: string;
   stock?: number;
-  cost?: number;
   retail_price?: number;
   wholesale_price?: number;
 }
@@ -17,7 +16,6 @@ export interface UpdateProductDto {
   status?: ProductStatus;
   categoryId?: string;
   stock?: number;
-  cost?: number;
   retail_price?: number;
   wholesale_price?: number;
 }

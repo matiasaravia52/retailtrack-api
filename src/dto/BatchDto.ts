@@ -3,6 +3,7 @@ export interface CreateBatchDto {
     initialQuantity: number;
     availableQuantity: number;
     unitCost: number;
+    expirationDate?: Date;
 }
 
 export interface UpdateBatchDto {
@@ -10,4 +11,5 @@ export interface UpdateBatchDto {
     initialQuantity?: number;
     availableQuantity?: number;
     unitCost?: number;
+    expirationDate?: Date;
 }

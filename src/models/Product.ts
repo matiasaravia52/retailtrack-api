@@ -13,7 +13,6 @@ interface ProductAttributes {
   description: string;
   categoryId?: string | null;
   stock: number;
-  cost: number;
   retail_price: number;
   wholesale_price: number;
   status: ProductStatus;
@@ -29,7 +28,6 @@ class Product extends Model<ProductAttributes, ProductCreationAttributes> implem
   public description!: string;
   public categoryId!: string | null;
   public stock!: number;
-  public cost!: number;
   public retail_price!: number;
   public wholesale_price!: number;
   public status!: ProductStatus;
@@ -63,11 +61,7 @@ Product.init({
     allowNull: false,
     defaultValue: 0
   },
-  cost: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-    defaultValue: 0
-  },
+
   retail_price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

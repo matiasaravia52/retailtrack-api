@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import Product, { ProductStatus } from '../models/Product';
 import { IProductRepository } from '../interfaces/repository/IProductRepository';
 import { CreateProductDto } from '../dto/ProductDto';
@@ -12,20 +12,19 @@ export class ProductRepository implements IProductRepository {
     return Product.findByPk(id);
   }
 
-  async create(product: CreateProductDto): Promise<Product> {
+  async create(product: CreateProductDto, options?: { transaction?: Transaction }): Promise<Product> {
     return Product.create({
       name: product.name,
       description: product.description,
       status: product.status || ProductStatus.ACTIVE,
       categoryId: product.categoryId || null,
       stock: product.stock || 0,
-      cost: product.cost || 0,
       retail_price: product.retail_price || 0,
       wholesale_price: product.wholesale_price || 0
-    });
+    }, options);
   }
 
-  async update(id: string, product: CreateProductDto): Promise<Product> {
+  async update(id: string, product: CreateProductDto, options?: { transaction?: Transaction }): Promise<Product> {
     const existingProduct = await this.findById(id);
     if (!existingProduct) {
       throw new Error('Product not found');
@@ -38,11 +37,11 @@ export class ProductRepository implements IProductRepository {
     if (product.status !== undefined) updateData.status = product.status;
     if (product.categoryId !== undefined) updateData.categoryId = product.categoryId;
     if (product.stock !== undefined) updateData.stock = product.stock;
-    if (product.cost !== undefined) updateData.cost = product.cost;
+
     if (product.retail_price !== undefined) updateData.retail_price = product.retail_price;
     if (product.wholesale_price !== undefined) updateData.wholesale_price = product.wholesale_price;
     
-    await existingProduct.update(updateData);
+    await existingProduct.update(updateData, options);
     return existingProduct;
   }
 

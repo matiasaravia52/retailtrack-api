@@ -21,6 +21,18 @@ export class BatchService implements IBatchService {
     async createBatch(batchData: CreateBatchDto): Promise<Batch> {
         const transaction = await sequelize.transaction();
         try {
+            // Asegurarse de que availableQuantity sea igual a initialQuantity al crear
+            if (batchData.availableQuantity === undefined) {
+                batchData.availableQuantity = batchData.initialQuantity;
+            }
+            
+            // Si no se proporciona fecha de expiración, establecer una por defecto (1 año desde hoy)
+            if (!batchData.expirationDate) {
+                const oneYearFromNow = new Date();
+                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+                batchData.expirationDate = oneYearFromNow;
+            }
+            
             // Crear el lote
             const batch = await this.batchRepository.create(batchData, { transaction });
             
@@ -30,13 +42,18 @@ export class BatchService implements IBatchService {
                 batchId: batch.id,
                 type: StockMovementType.IN,
                 quantity: batchData.initialQuantity,
-                unitCost: batchData.unitCost
+                unitCost: batchData.unitCost,
+                notes: `Ingreso de lote #${batch.id}`
             }, { transaction });
             
             // Actualizar el stock total del producto
             const product = await sequelize.models.Product.findByPk(batchData.productId, { transaction });
             if (product) {
                 await product.increment('stock', { by: batchData.initialQuantity, transaction });
+            } else {
+                // Si el producto no existe, hacer rollback
+                await transaction.rollback();
+                throw new Error(`Producto con ID ${batchData.productId} no encontrado`);
             }
             
             await transaction.commit();

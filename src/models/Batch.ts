@@ -8,6 +8,7 @@ interface BatchAttributes {
     initialQuantity: number;
     availableQuantity: number;
     unitCost: number;
+    expirationDate?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -20,6 +21,7 @@ class Batch extends Model<BatchAttributes, BatchCreationAttributes> implements B
     public initialQuantity!: number;
     public availableQuantity!: number;
     public unitCost!: number;
+    public expirationDate?: Date;
     public createdAt?: Date;
     public updatedAt?: Date;
 }
@@ -53,9 +55,15 @@ Batch.init({
         field: 'available_quantity'
     },
     unitCost: {
-        type: DataTypes.DECIMAL,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        defaultValue: 0,
         field: 'unit_cost'
+    },
+    expirationDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'expiration_date'
     },
 }, {
     sequelize,

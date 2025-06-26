@@ -16,6 +16,7 @@ interface StockMovementsAttributes {
     type: StockMovementType;
     quantity: number;
     unitCost: number;
+    notes?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -27,6 +28,7 @@ class StockMovements extends Model<StockMovementsAttributes, StockMovementsCreat
     public type!: StockMovementType;
     public quantity!: number;
     public unitCost!: number;
+    public notes?: string;
     public createdAt?: Date;
     public updatedAt?: Date;
 }
@@ -75,12 +77,16 @@ StockMovements.init({
         }
     },
     unitCost: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         field: 'unit_cost',
         validate: {
             min: { args: [0], msg: 'El costo unitario no puede ser negativo' }
         }
+    },
+    notes: {
+        type: DataTypes.TEXT,
+        allowNull: true
     },
     createdAt: {
         type: DataTypes.DATE,

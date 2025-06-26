@@ -6,6 +6,7 @@ export interface CreateStockMovementsDto {
     type: StockMovementType;
     quantity: number;
     unitCost: number;
+    notes?: string;
 }
 
 export interface UpdateStockMovementsDto {
@@ -14,4 +15,5 @@ export interface UpdateStockMovementsDto {
     type?: StockMovementType;
     quantity?: number;
     unitCost?: number;
+    notes?: string;
 }
