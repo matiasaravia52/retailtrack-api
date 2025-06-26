@@ -82,7 +82,12 @@ export class ProductService implements IProductService {
   }
 
   async deleteProduct(id: string): Promise<void> {
-    return this.productRepository.delete(id);
+    try {
+      await this.productRepository.delete(id);
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      throw error;
+    }
   }
 
   async searchProducts(query: string): Promise<Product[]> {

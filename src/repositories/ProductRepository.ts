@@ -46,7 +46,13 @@ export class ProductRepository implements IProductRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await Product.destroy({ where: { id } });
+    const product = await Product.findByPk(id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    
+    // Implementar eliminación lógica: cambiar estado a inactivo en lugar de eliminar físicamente
+    await product.update({ status: ProductStatus.INACTIVE });
   }
 
   async search(query: string): Promise<Product[]> {

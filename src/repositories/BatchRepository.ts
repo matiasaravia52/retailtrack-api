@@ -13,12 +13,25 @@ export class BatchRepository implements IBatchRepository {
     }
 
     async create(batch: CreateBatchDto, options?: CreateOptions): Promise<Batch> {
-        return Batch.create({
+        // Crear objeto con los campos obligatorios
+        const batchData: any = {
             productId: batch.productId,
             initialQuantity: batch.initialQuantity,
             availableQuantity: batch.availableQuantity,
             unitCost: batch.unitCost
-        }, options);
+        };
+        
+        // Añadir fecha de expiración solo si está definida
+        if (batch.expirationDate) {
+            try {
+                batchData.expirationDate = batch.expirationDate;
+            } catch (error) {
+                console.error('Error al asignar fecha de expiración:', error);
+                // Continuar sin la fecha de expiración si hay error
+            }
+        }
+        
+        return Batch.create(batchData, options);
     }
 
     async update(id: string, batch: UpdateBatchDto, options?: UpdateOptions): Promise<Batch> {

@@ -67,9 +67,17 @@ export class ProductController {
   async deleteProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      
+      // Verificar si el producto existe antes de intentar eliminarlo
+      const product = await this.productService.getProductById(id);
+      if (!product) {
+        throw new ApiError('Producto no encontrado', 404);
+      }
+      
       await this.productService.deleteProduct(id);
-      res.status(204).send();
+      res.status(200).json({ message: 'Producto marcado como inactivo correctamente' });
     } catch (error) {
+      console.error('Error en deleteProduct controller:', error);
       next(error);
     }
   }

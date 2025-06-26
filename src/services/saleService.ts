@@ -123,11 +123,20 @@ export class SaleService {
         
         subtotal += itemSubtotal;
         
+        // Obtener el costo unitario del lote más antiguo (FIFO)
+        const oldestBatch = await Batch.findOne({
+          where: { productId: product.id, availableQuantity: { [Op.gt]: 0 } },
+          order: [['expirationDate', 'ASC']],
+          transaction
+        });
+        
+        const unitCost = oldestBatch ? oldestBatch.unitCost : 0;
+        
         // Agregar a la lista de items con detalles completos
         itemsWithDetails.push({
           ...item,
           unitPrice,
-          unitCost: product.cost,
+          unitCost,
           discount,
           totalPrice: itemSubtotal
         });
@@ -186,7 +195,7 @@ export class SaleService {
             productId: item.productId,
             availableQuantity: { [Op.gt]: 0 }
           },
-          order: [['createdAt', 'ASC']],
+          order: [['expirationDate', 'ASC']],
           transaction
         });
         
@@ -223,7 +232,8 @@ export class SaleService {
             batchId: batch.id,
             type: StockMovementType.OUT,
             quantity: quantityFromBatch,
-            unitCost: batch.unitCost
+            unitCost: batch.unitCost,
+            notes: `Venta #${sale.id} - ${sale.clientName || 'Cliente no registrado'}`
           }, { transaction });
           
           remainingQuantity -= quantityFromBatch;
@@ -416,7 +426,8 @@ export class SaleService {
             batchId: item.batchId,
             type: StockMovementType.IN,
             quantity: item.quantity,
-            unitCost: item.unitCost
+            unitCost: item.unitCost,
+            notes: `Cancelación de venta #${sale.id} - ${sale.clientName || 'Cliente no registrado'}`
           }, { transaction });
         }
         
