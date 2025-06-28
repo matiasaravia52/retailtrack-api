@@ -2,12 +2,14 @@ import { Model, DataTypes, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 import Product from './Product';
 import Sale from './Sale';
+import Batch from './Batch';
 
 // Definir los atributos del detalle de venta
 interface SaleItemAttributes {
   id: string;
   saleId: string;
   productId: string;
+  batchId: string;
   quantity: number;
   unitPrice: number;
   unitCost: number;
@@ -25,6 +27,7 @@ class SaleItem extends Model<SaleItemAttributes, SaleItemCreationAttributes> imp
   public id!: string;
   public saleId!: string;
   public productId!: string;
+  public batchId!: string;
   public quantity!: number;
   public unitPrice!: number;
   public unitCost!: number;
@@ -61,6 +64,17 @@ SaleItem.init(
       field: 'product_id',
       references: {
         model: Product,
+        key: 'id'
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'CASCADE'
+    },
+    batchId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      field: 'batch_id',
+      references: {
+        model: Batch,
         key: 'id'
       },
       onDelete: 'RESTRICT',

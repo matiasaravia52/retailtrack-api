@@ -4,10 +4,16 @@ import Permission from './Permission';
 import UserRole from './UserRole';
 import RolePermission from './RolePermission';
 import Product from './Product';
-import Inventory from './Inventory';
-import PriceHistory from './PriceHistory';
+import PriceHistory from './SalePrice';
 import Sale from './Sale';
 import SaleItem from './SaleItem';
+import StockMovements from './StockMovements';
+import Batch from './Batch';
+import Category from './Category';
+import Customer from './Customer';
+import Supplier from './Supplier';
+import Purchase from './Purchase';
+import PurchaseLine from './PurchaseLine';
 
 // Definir las asociaciones entre modelos
 
@@ -41,49 +47,39 @@ Permission.belongsToMany(Role, {
   as: 'roles'
 });
 
-// Asociaciones Product-Inventory (uno a muchos)
-Product.hasMany(Inventory, {
+// Asociaciones Product-Batch (uno a muchos)
+Product.hasMany(Batch, {
   foreignKey: 'productId',
-  as: 'inventoryMovements'
+  as: 'batches'
 });
 
-Inventory.belongsTo(Product, {
-  foreignKey: 'productId',
-  as: 'product'
-});
-
-// Asociaciones User-Inventory (uno a muchos)
-User.hasMany(Inventory, {
-  foreignKey: 'userId',
-  as: 'inventoryMovements'
-});
-
-Inventory.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
-});
-
-// Asociaciones Product-PriceHistory (uno a muchos)
-Product.hasMany(PriceHistory, {
-  foreignKey: 'productId',
-  as: 'priceHistory'
-});
-
-PriceHistory.belongsTo(Product, {
+Batch.belongsTo(Product, {
   foreignKey: 'productId',
   as: 'product'
 });
 
-// Asociaciones User-PriceHistory (uno a muchos)
-User.hasMany(PriceHistory, {
-  foreignKey: 'userId',
-  as: 'priceChanges'
+// Asociaciones Product-StockMovements (uno a muchos)
+Product.hasMany(StockMovements, {
+  foreignKey: 'productId',
+  as: 'stockMovements'
 });
 
-PriceHistory.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
+StockMovements.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product'
 });
+
+// Asociaciones Batch-StockMovements (uno a muchos)
+Batch.hasMany(StockMovements, {
+  foreignKey: 'batchId',
+  as: 'stockMovements'
+});
+
+StockMovements.belongsTo(Batch, {
+  foreignKey: 'batchId',
+  as: 'batch'
+});
+
 
 // Asociaciones User-Sale (uno a muchos)
 User.hasMany(Sale, {
@@ -118,6 +114,75 @@ SaleItem.belongsTo(Product, {
   as: 'product'
 });
 
+// Asociaciones Batch-SaleItem (uno a muchos)
+Batch.hasMany(SaleItem, {
+  foreignKey: 'batchId',
+  as: 'saleItems'
+});
+
+SaleItem.belongsTo(Batch, {
+  foreignKey: 'batchId',
+  as: 'batch'
+});
+
+// Asociaciones Category-Product (uno a muchos)
+Category.hasMany(Product, {
+  foreignKey: 'categoryId',
+  as: 'products'
+});
+
+Product.belongsTo(Category, {
+  foreignKey: 'categoryId',
+  as: 'category'
+});
+
+// Note: Customer-Sale association removed because Sale model doesn't have customerId field
+// If you want to use this association, add customerId to the Sale model
+
+// Asociaciones Supplier-Purchase (uno a muchos)
+Supplier.hasMany(Purchase, {
+  foreignKey: 'supplierId',
+  as: 'purchases'
+});
+
+Purchase.belongsTo(Supplier, {
+  foreignKey: 'supplierId',
+  as: 'supplier'
+});
+
+// Asociaciones Purchase-PurchaseLine (uno a muchos)
+Purchase.hasMany(PurchaseLine, {
+  foreignKey: 'purchaseId',
+  as: 'purchaseLines'
+});
+
+PurchaseLine.belongsTo(Purchase, {
+  foreignKey: 'purchaseId',
+  as: 'purchase'
+});
+
+// Asociaciones Product-PurchaseLine (uno a muchos)
+Product.hasMany(PurchaseLine, {
+  foreignKey: 'productId',
+  as: 'purchaseLines'
+});
+
+PurchaseLine.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product'
+});
+
+// Asociaciones Batch-PurchaseLine (uno a muchos)
+Batch.hasMany(PurchaseLine, {
+  foreignKey: 'batchId',
+  as: 'purchaseLines'
+});
+
+PurchaseLine.belongsTo(Batch, {
+  foreignKey: 'batchId',
+  as: 'batch'
+});
+
 export {
   User,
   Role,
@@ -125,8 +190,14 @@ export {
   UserRole,
   RolePermission,
   Product,
-  Inventory,
   PriceHistory,
   Sale,
-  SaleItem
+  SaleItem,
+  StockMovements,
+  Batch,
+  Category,
+  Customer,
+  Supplier,
+  Purchase,
+  PurchaseLine
 };

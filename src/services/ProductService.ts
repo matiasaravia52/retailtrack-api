@@ -2,6 +2,9 @@ import { IProductService } from '../interfaces/service/IProductService';
 import { IProductRepository } from '../interfaces/repository/IProductRepository';
 import Product from '../models/Product';
 import { CreateProductDto } from '../dto/ProductDto';
+import { sequelize } from '../config/database';
+import { StockMovementType } from '../models/StockMovements';
+import { v4 as uuidv4 } from 'uuid';
 
 export class ProductService implements IProductService {
   private productRepository: IProductRepository;
@@ -18,9 +21,55 @@ export class ProductService implements IProductService {
   }
 
   async createProduct(productData: CreateProductDto): Promise<Product> {
-    // Usar directamente el DTO en lugar de crear una instancia de Product
-    const createdProduct = await this.productRepository.create(productData);
-    return createdProduct;
+    const transaction = await sequelize.transaction();
+    
+    try {
+      // Crear el producto con stock inicial 0 (el stock se actualizará al crear el lote)
+      const initialStock = productData.stock || 0;
+      const productToCreate = {
+        ...productData,
+        stock: 0 // Inicialmente 0, se actualizará al crear el lote
+      };
+      
+      // Crear el producto
+      const createdProduct = await this.productRepository.create(productToCreate, { transaction });
+      
+      // Si hay stock inicial, crear un lote inicial
+      if (initialStock > 0) {
+        // Crear un lote inicial para el producto
+        const batchId = uuidv4();
+        const oneYearFromNow = new Date();
+        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+        
+        await sequelize.models.Batch.create({
+          id: batchId,
+          productId: createdProduct.id,
+          initialQuantity: initialStock,
+          availableQuantity: initialStock,
+          unitCost: 0, // Costo inicial 0, ya que no se especifica en la creación del producto
+          expirationDate: oneYearFromNow
+        }, { transaction });
+        
+        // Registrar el movimiento de stock
+        await sequelize.models.StockMovements.create({
+          productId: createdProduct.id,
+          batchId: batchId,
+          type: StockMovementType.IN,
+          quantity: initialStock,
+          unitCost: 0,
+          notes: `Stock inicial al crear producto #${createdProduct.id}`
+        }, { transaction });
+        
+        // Actualizar el stock total del producto
+        await createdProduct.update({ stock: initialStock }, { transaction });
+      }
+      
+      await transaction.commit();
+      return createdProduct;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   async updateProduct(id: string, productData: CreateProductDto): Promise<Product> {
@@ -33,7 +82,12 @@ export class ProductService implements IProductService {
   }
 
   async deleteProduct(id: string): Promise<void> {
-    return this.productRepository.delete(id);
+    try {
+      await this.productRepository.delete(id);
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      throw error;
+    }
   }
 
   async searchProducts(query: string): Promise<Product[]> {
