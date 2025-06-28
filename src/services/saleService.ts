@@ -195,7 +195,7 @@ export class SaleService {
             productId: item.productId,
             availableQuantity: { [Op.gt]: 0 }
           },
-          order: [['expirationDate', 'ASC']],
+          order: [['createdAt', 'ASC']],
           transaction
         });
         

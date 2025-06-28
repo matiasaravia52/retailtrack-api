@@ -4,13 +4,8 @@ import { SaleStatus, SaleType } from '../models/Sale';
 
 export const createSale = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.user as { userId: string };
-    const saleData = {
-      ...req.body,
-      userId
-    };
     
-    const result = await SaleService.createSale(saleData);
+    const result = await SaleService.createSale(req.body);
     
     return res.status(result.statusCode || 500).json(result);
   } catch (error) {

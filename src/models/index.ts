@@ -114,6 +114,17 @@ SaleItem.belongsTo(Product, {
   as: 'product'
 });
 
+// Asociaciones Batch-SaleItem (uno a muchos)
+Batch.hasMany(SaleItem, {
+  foreignKey: 'batchId',
+  as: 'saleItems'
+});
+
+SaleItem.belongsTo(Batch, {
+  foreignKey: 'batchId',
+  as: 'batch'
+});
+
 // Asociaciones Category-Product (uno a muchos)
 Category.hasMany(Product, {
   foreignKey: 'categoryId',
@@ -125,16 +136,8 @@ Product.belongsTo(Category, {
   as: 'category'
 });
 
-// Asociaciones Customer-Sale (uno a muchos)
-Customer.hasMany(Sale, {
-  foreignKey: 'customerId',
-  as: 'sales'
-});
-
-Sale.belongsTo(Customer, {
-  foreignKey: 'customerId',
-  as: 'customer'
-});
+// Note: Customer-Sale association removed because Sale model doesn't have customerId field
+// If you want to use this association, add customerId to the Sale model
 
 // Asociaciones Supplier-Purchase (uno a muchos)
 Supplier.hasMany(Purchase, {
