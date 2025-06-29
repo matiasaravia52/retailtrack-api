@@ -1,4 +1,5 @@
 import { IProductService } from '../interfaces/service/IProductService';
+import { ProductFilters } from '../interfaces/repository/IProductRepository';
 import { IProductRepository } from '../interfaces/repository/IProductRepository';
 import Product from '../models/Product';
 import { CreateProductDto } from '../dto/ProductDto';
@@ -12,8 +13,8 @@ export class ProductService implements IProductService {
     this.productRepository = productRepository;
   }
 
-  async getAllProducts(): Promise<Product[]> {
-    return this.productRepository.findAll();
+  async getAllProducts(filters?: ProductFilters): Promise<Product[]> {
+    return this.productRepository.findAll(filters);
   }
 
   async getProductById(id: string): Promise<Product | null> {
@@ -90,8 +91,8 @@ export class ProductService implements IProductService {
     }
   }
 
-  async searchProducts(query: string): Promise<Product[]> {
-    return this.productRepository.search(query);
+  async searchProducts(query: string, filters?: ProductFilters): Promise<Product[]> {
+    return this.productRepository.search(query, filters);
   }
 }
 

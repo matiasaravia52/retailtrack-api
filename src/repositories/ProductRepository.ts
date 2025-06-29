@@ -1,11 +1,45 @@
-import { Op, Transaction } from 'sequelize';
+import { Op, Transaction, Order } from 'sequelize';
 import Product, { ProductStatus } from '../models/Product';
-import { IProductRepository } from '../interfaces/repository/IProductRepository';
+import { IProductRepository, ProductFilters } from '../interfaces/repository/IProductRepository';
 import { CreateProductDto } from '../dto/ProductDto';
+import Category from '../models/Category';
 
 export class ProductRepository implements IProductRepository {
-  async findAll(): Promise<Product[]> {
-    return Product.findAll();
+  async findAll(filters?: ProductFilters): Promise<Product[]> {
+    const whereClause: any = {};
+    const orderOptions: Order = [];
+    
+    // Aplicar filtros si existen
+    if (filters) {
+      // Filtrar por estado
+      if (filters.status) {
+        whereClause.status = filters.status;
+      }
+      
+      // Filtrar por categoría
+      if (filters.categoryId) {
+        whereClause.categoryId = filters.categoryId;
+      }
+      
+      // Aplicar ordenamiento
+      if (filters.sortBy) {
+        const validColumns = ['name', 'createdAt', 'updatedAt', 'retail_price', 'wholesale_price', 'stock'];
+        if (validColumns.includes(filters.sortBy)) {
+          const sortOrder = filters.sortOrder === 'DESC' ? 'DESC' : 'ASC';
+          orderOptions.push([filters.sortBy, sortOrder]);
+        }
+      }
+    }
+    
+    return Product.findAll({
+      where: whereClause,
+      order: orderOptions.length > 0 ? orderOptions : [['updatedAt', 'DESC']],
+      include: [{
+        model: Category,
+        as: 'category',
+        attributes: ['id', 'name']
+      }]
+    });
   }
 
   async findById(id: string): Promise<Product | null> {
@@ -55,13 +89,46 @@ export class ProductRepository implements IProductRepository {
     await product.update({ status: ProductStatus.INACTIVE });
   }
 
-  async search(query: string): Promise<Product[]> {
-    return Product.findAll({
-      where: {
-        name: {
-          [Op.iLike]: `%${query}%`
+  async search(query: string, filters?: ProductFilters): Promise<Product[]> {
+    const whereClause: any = {
+      [Op.or]: [
+        { name: { [Op.iLike]: `%${query}%` } },
+        { description: { [Op.iLike]: `%${query}%` } }
+      ]
+    };
+    
+    const orderOptions: Order = [];
+    
+    // Aplicar filtros adicionales si existen
+    if (filters) {
+      // Filtrar por estado
+      if (filters.status) {
+        whereClause.status = filters.status;
+      }
+      
+      // Filtrar por categoría
+      if (filters.categoryId) {
+        whereClause.categoryId = filters.categoryId;
+      }
+      
+      // Aplicar ordenamiento
+      if (filters.sortBy) {
+        const validColumns = ['name', 'createdAt', 'updatedAt', 'retail_price', 'wholesale_price', 'stock'];
+        if (validColumns.includes(filters.sortBy)) {
+          const sortOrder = filters.sortOrder === 'DESC' ? 'DESC' : 'ASC';
+          orderOptions.push([filters.sortBy, sortOrder]);
         }
       }
+    }
+    
+    return Product.findAll({
+      where: whereClause,
+      order: orderOptions.length > 0 ? orderOptions : [['updatedAt', 'DESC']],
+      include: [{
+        model: Category,
+        as: 'category',
+        attributes: ['id', 'name']
+      }]
     });
   }
 }

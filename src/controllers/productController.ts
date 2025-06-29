@@ -3,6 +3,8 @@ import { IProductService } from '../interfaces/service/IProductService';
 import { ProductRepository } from '../repositories/ProductRepository';
 import { validateCreateProductDto, validateUpdateProductDto } from '../dto/ProductDto';
 import { ApiError } from '../middleware/errorHandler';
+import { ProductStatus } from '../models/Product';
+import { ProductFilters } from '../interfaces/repository/IProductRepository';
 
 
 export class ProductController {
@@ -11,7 +13,30 @@ export class ProductController {
 
   async getAllProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const products = await this.productService.getAllProducts();
+      // Extraer parámetros de filtrado y ordenamiento de la solicitud
+      const filters: ProductFilters = {};
+      
+      // Filtrar por estado (activo/inactivo)
+      if (req.query.status && (req.query.status === ProductStatus.ACTIVE || req.query.status === ProductStatus.INACTIVE)) {
+        filters.status = req.query.status as string;
+      }
+      
+      // Filtrar por categoría
+      if (req.query.categoryId) {
+        filters.categoryId = req.query.categoryId as string;
+      }
+      
+      // Ordenar por campo
+      if (req.query.sortBy) {
+        filters.sortBy = req.query.sortBy as string;
+      }
+      
+      // Orden ascendente o descendente
+      if (req.query.sortOrder && (req.query.sortOrder === 'ASC' || req.query.sortOrder === 'DESC')) {
+        filters.sortOrder = req.query.sortOrder as 'ASC' | 'DESC';
+      }
+      
+      const products = await this.productService.getAllProducts(filters);
       res.json(products);
     } catch (error) {
       next(error);
@@ -90,8 +115,31 @@ export class ProductController {
         next(ApiError.badRequest('Search term is required'));
         return;
       }
+      
+      // Extraer parámetros de filtrado y ordenamiento de la solicitud
+      const filters: ProductFilters = {};
+      
+      // Filtrar por estado (activo/inactivo)
+      if (req.query.status && (req.query.status === ProductStatus.ACTIVE || req.query.status === ProductStatus.INACTIVE)) {
+        filters.status = req.query.status as string;
+      }
+      
+      // Filtrar por categoría
+      if (req.query.categoryId) {
+        filters.categoryId = req.query.categoryId as string;
+      }
+      
+      // Ordenar por campo
+      if (req.query.sortBy) {
+        filters.sortBy = req.query.sortBy as string;
+      }
+      
+      // Orden ascendente o descendente
+      if (req.query.sortOrder && (req.query.sortOrder === 'ASC' || req.query.sortOrder === 'DESC')) {
+        filters.sortOrder = req.query.sortOrder as 'ASC' | 'DESC';
+      }
 
-      const products = await this.productService.searchProducts(query);
+      const products = await this.productService.searchProducts(query, filters);
       res.json(products);
     } catch (error) {
       next(error);
