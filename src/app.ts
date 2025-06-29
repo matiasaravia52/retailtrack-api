@@ -17,6 +17,7 @@ import customerRoutes from './routes/customerRoutes';
 import supplierRoutes from './routes/supplierRoutes';
 import purchaseRoutes from './routes/purchaseRoutes';
 import saleRoutes from './routes/saleRoutes';
+import reportRoutes from './routes/reportRoutes';
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/sales', saleRoutes);
+app.use('/api/reports', reportRoutes);
 
 connectDB()
   .then(async () => {

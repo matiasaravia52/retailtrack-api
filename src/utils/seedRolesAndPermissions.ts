@@ -46,6 +46,10 @@ export async function seedRolesAndPermissions() {
       { name: 'sales:create', description: 'Crear ventas' },
       { name: 'sales:reports', description: 'Ver reportes de ventas' },
       
+      // Permisos de reportes
+      { name: 'reports:view', description: 'Ver reportes básicos' },
+      { name: 'reports:viewAll', description: 'Ver todos los reportes (incluyendo de otros usuarios)' },
+      
       // Permisos de clientes
       { name: 'customers:view', description: 'Ver clientes' },
       { name: 'customers:create', description: 'Crear clientes' },
@@ -109,6 +113,7 @@ export async function seedRolesAndPermissions() {
         'customers:view', 'customers:create', 'customers:edit', 'customers:delete',
         'suppliers:view', 'suppliers:create', 'suppliers:edit', 'suppliers:delete',
         'purchases:view', 'purchases:create', 'purchases:edit',
+        'reports:view', 'reports:viewAll',
         'roles:view', 'permissions:view'
       ],
       
