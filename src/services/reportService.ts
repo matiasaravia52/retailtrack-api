@@ -1,7 +1,6 @@
 import { Op } from 'sequelize';
-import { Sale, SaleItem, Product, Batch, Purchase } from '../models';
+import { Sale, SaleItem } from '../models';
 import { SaleStatus } from '../models/Sale';
-import { sequelize } from '../config/database';
 
 interface ReportFilters {
   startDate?: string;
@@ -24,11 +23,27 @@ export class ReportService {
         dateFilter.date = {};
         
         if (startDate) {
-          dateFilter.date[Op.gte] = new Date(startDate);
+          // Crear la fecha con el formato YYYY-MM-DD para evitar problemas de zona horaria
+          const parts = startDate.split('-');
+          const year = parseInt(parts[0]);
+          const month = parseInt(parts[1]) - 1; // Los meses en JavaScript son 0-indexed
+          const day = parseInt(parts[2]);
+          
+          // Crear la fecha al inicio del día en la zona horaria local
+          const startDateTime = new Date(year, month, day, 0, 0, 0, 0);
+          dateFilter.date[Op.gte] = startDateTime;
         }
         
         if (endDate) {
-          dateFilter.date[Op.lte] = new Date(endDate);
+          // Crear la fecha con el formato YYYY-MM-DD para evitar problemas de zona horaria
+          const parts = endDate.split('-');
+          const year = parseInt(parts[0]);
+          const month = parseInt(parts[1]) - 1; // Los meses en JavaScript son 0-indexed
+          const day = parseInt(parts[2]);
+          
+          // Crear la fecha al final del día en la zona horaria local
+          const endDateTime = new Date(year, month, day, 23, 59, 59, 999);
+          dateFilter.date[Op.lte] = endDateTime;
         }
       }
 
