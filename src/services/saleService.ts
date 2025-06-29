@@ -322,7 +322,7 @@ export class SaleService {
       }
       
       if (clientName) {
-        filter.clientName = { [Op.like]: `%${clientName}%` };
+        filter.clientName = { [Op.iLike]: `%${clientName}%` };
       }
       
       if (status && Object.values(SaleStatus).includes(status)) {
