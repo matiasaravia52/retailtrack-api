@@ -36,8 +36,23 @@ export class ProductController {
         filters.sortOrder = req.query.sortOrder as 'ASC' | 'DESC';
       }
       
-      const products = await this.productService.getAllProducts(filters);
-      res.json(products);
+      // Parámetros de paginación
+      if (req.query.page) {
+        const page = parseInt(req.query.page as string);
+        if (!isNaN(page) && page > 0) {
+          filters.page = page;
+        }
+      }
+      
+      if (req.query.limit) {
+        const limit = parseInt(req.query.limit as string);
+        if (!isNaN(limit) && limit > 0) {
+          filters.limit = limit;
+        }
+      }
+      
+      const paginatedResult = await this.productService.getAllProducts(filters);
+      res.json(paginatedResult);
     } catch (error) {
       next(error);
     }
@@ -138,9 +153,24 @@ export class ProductController {
       if (req.query.sortOrder && (req.query.sortOrder === 'ASC' || req.query.sortOrder === 'DESC')) {
         filters.sortOrder = req.query.sortOrder as 'ASC' | 'DESC';
       }
+      
+      // Parámetros de paginación
+      if (req.query.page) {
+        const page = parseInt(req.query.page as string);
+        if (!isNaN(page) && page > 0) {
+          filters.page = page;
+        }
+      }
+      
+      if (req.query.limit) {
+        const limit = parseInt(req.query.limit as string);
+        if (!isNaN(limit) && limit > 0) {
+          filters.limit = limit;
+        }
+      }
 
-      const products = await this.productService.searchProducts(query, filters);
-      res.json(products);
+      const paginatedResult = await this.productService.searchProducts(query, filters);
+      res.json(paginatedResult);
     } catch (error) {
       next(error);
     }

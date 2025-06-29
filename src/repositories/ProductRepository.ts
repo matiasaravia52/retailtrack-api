@@ -1,13 +1,18 @@
 import { Op, Transaction, Order } from 'sequelize';
 import Product, { ProductStatus } from '../models/Product';
-import { IProductRepository, ProductFilters } from '../interfaces/repository/IProductRepository';
+import { IProductRepository, ProductFilters, PaginatedResult } from '../interfaces/repository/IProductRepository';
 import { CreateProductDto } from '../dto/ProductDto';
 import Category from '../models/Category';
 
 export class ProductRepository implements IProductRepository {
-  async findAll(filters?: ProductFilters): Promise<Product[]> {
+  async findAll(filters?: ProductFilters): Promise<PaginatedResult<Product>> {
     const whereClause: any = {};
     const orderOptions: Order = [];
+    
+    // Valores por defecto para paginación
+    const page = filters?.page && filters.page > 0 ? filters.page : 1;
+    const limit = filters?.limit && filters.limit > 0 ? filters.limit : 10;
+    const offset = (page - 1) * limit;
     
     // Aplicar filtros si existen
     if (filters) {
@@ -31,15 +36,33 @@ export class ProductRepository implements IProductRepository {
       }
     }
     
-    return Product.findAll({
+    // Obtener el total de registros para calcular el número total de páginas
+    const count = await Product.count({ where: whereClause });
+    
+    // Obtener los productos paginados
+    const products = await Product.findAll({
       where: whereClause,
       order: orderOptions.length > 0 ? orderOptions : [['updatedAt', 'DESC']],
       include: [{
         model: Category,
         as: 'category',
         attributes: ['id', 'name']
-      }]
+      }],
+      limit,
+      offset
     });
+    
+    // Calcular el número total de páginas
+    const totalPages = Math.ceil(count / limit);
+    
+    // Devolver el resultado paginado
+    return {
+      items: products,
+      total: count,
+      page,
+      limit,
+      totalPages
+    };
   }
 
   async findById(id: string): Promise<Product | null> {
@@ -89,7 +112,7 @@ export class ProductRepository implements IProductRepository {
     await product.update({ status: ProductStatus.INACTIVE });
   }
 
-  async search(query: string, filters?: ProductFilters): Promise<Product[]> {
+  async search(query: string, filters?: ProductFilters): Promise<PaginatedResult<Product>> {
     const whereClause: any = {
       [Op.or]: [
         { name: { [Op.iLike]: `%${query}%` } },
@@ -98,6 +121,11 @@ export class ProductRepository implements IProductRepository {
     };
     
     const orderOptions: Order = [];
+    
+    // Valores por defecto para paginación
+    const page = filters?.page && filters.page > 0 ? filters.page : 1;
+    const limit = filters?.limit && filters.limit > 0 ? filters.limit : 10;
+    const offset = (page - 1) * limit;
     
     // Aplicar filtros adicionales si existen
     if (filters) {
@@ -121,14 +149,32 @@ export class ProductRepository implements IProductRepository {
       }
     }
     
-    return Product.findAll({
+    // Obtener el total de registros para calcular el número total de páginas
+    const count = await Product.count({ where: whereClause });
+    
+    // Obtener los productos paginados
+    const products = await Product.findAll({
       where: whereClause,
       order: orderOptions.length > 0 ? orderOptions : [['updatedAt', 'DESC']],
       include: [{
         model: Category,
         as: 'category',
         attributes: ['id', 'name']
-      }]
+      }],
+      limit,
+      offset
     });
+    
+    // Calcular el número total de páginas
+    const totalPages = Math.ceil(count / limit);
+    
+    // Devolver el resultado paginado
+    return {
+      items: products,
+      total: count,
+      page,
+      limit,
+      totalPages
+    };
   }
 }

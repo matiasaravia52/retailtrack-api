@@ -1,5 +1,5 @@
 import { IProductService } from '../interfaces/service/IProductService';
-import { ProductFilters } from '../interfaces/repository/IProductRepository';
+import { ProductFilters, PaginatedResult } from '../interfaces/repository/IProductRepository';
 import { IProductRepository } from '../interfaces/repository/IProductRepository';
 import Product from '../models/Product';
 import { CreateProductDto } from '../dto/ProductDto';
@@ -13,7 +13,7 @@ export class ProductService implements IProductService {
     this.productRepository = productRepository;
   }
 
-  async getAllProducts(filters?: ProductFilters): Promise<Product[]> {
+  async getAllProducts(filters?: ProductFilters): Promise<PaginatedResult<Product>> {
     return this.productRepository.findAll(filters);
   }
 
@@ -91,7 +91,7 @@ export class ProductService implements IProductService {
     }
   }
 
-  async searchProducts(query: string, filters?: ProductFilters): Promise<Product[]> {
+  async searchProducts(query: string, filters?: ProductFilters): Promise<PaginatedResult<Product>> {
     return this.productRepository.search(query, filters);
   }
 }
