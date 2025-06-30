@@ -85,3 +85,44 @@ export const cancelSale = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const exportSalesToCSV = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.user as { userId: string };
+    const { 
+      clientName, 
+      status, 
+      saleType, 
+      startDate, 
+      endDate 
+    } = req.query;
+    
+    const filters = {
+      userId,
+      clientName: clientName as string | undefined,
+      status: status as SaleStatus | undefined,
+      saleType: saleType as SaleType | undefined,
+      startDate: startDate as string | undefined,
+      endDate: endDate as string | undefined
+    };
+    
+    const result = await SaleService.exportSalesToCSV(filters);
+    
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(result);
+    }
+    
+    // Configurar los headers para la descarga del archivo CSV
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=ventas.csv');
+    
+    // Enviar el contenido CSV directamente
+    return res.status(200).send(result.data);
+  } catch (error) {
+    console.error('Error en el controlador de exportación de ventas:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor'
+    });
+  }
+};

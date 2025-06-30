@@ -45,6 +45,129 @@ interface SaleWithItems extends Sale {
 
 export class SaleService {
   /**
+   * Exporta las ventas a formato CSV según los filtros
+   */
+  static async exportSalesToCSV(filters: SaleFilters): Promise<{ success: boolean; data?: string; error?: string; statusCode?: number }> {
+    try {
+      // Obtener las ventas sin límite para exportar todas
+      const { userId, clientName, status, saleType, startDate, endDate } = filters;
+      
+      // Construir el filtro
+      const filter: any = {};
+      
+      if (userId) {
+        filter.userId = userId;
+      }
+      
+      if (clientName) {
+        filter.clientName = { [Op.iLike]: `%${clientName}%` };
+      }
+      
+      if (status && Object.values(SaleStatus).includes(status)) {
+        filter.status = status;
+      }
+      
+      if (saleType && Object.values(SaleType).includes(saleType)) {
+        filter.saleType = saleType;
+      }
+      
+      // Filtro por fechas
+      if (startDate || endDate) {
+        filter.date = {};
+        
+        if (startDate) {
+          filter.date[Op.gte] = new Date(startDate);
+        }
+        
+        if (endDate) {
+          filter.date[Op.lte] = new Date(endDate);
+        }
+      }
+      
+      // Obtener las ventas con sus items y productos
+      const sales = await Sale.findAll({
+        where: filter,
+        order: [['date', 'DESC']],
+        include: [
+          { 
+            association: 'items', 
+            include: [{ association: 'product' }] 
+          },
+          { 
+            association: 'user', 
+            attributes: ['id', 'name', 'email'] 
+          }
+        ]
+      });
+      
+      // Crear el contenido CSV
+      let csvContent = 'ID,Fecha,Cliente,Total,Estado,Método de Pago,Usuario,Productos\n';
+      
+      sales.forEach((sale: any) => {
+        // Formatear la fecha
+        const date = new Date(sale.date);
+        const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        
+        // Obtener el estado en español
+        let status = '';
+        switch (sale.status) {
+          case SaleStatus.COMPLETED:
+            status = 'Completada';
+            break;
+          case SaleStatus.PENDING:
+            status = 'Pendiente';
+            break;
+          case SaleStatus.CANCELLED:
+            status = 'Cancelada';
+            break;
+          default:
+            status = sale.status;
+        }
+        
+        // Obtener los nombres de los productos
+        const productNames = sale.items
+          ? sale.items.map((item: any) => 
+              `${item.product ? item.product.name : 'Producto desconocido'} (${item.quantity})`
+            ).join(', ')
+          : '';
+        
+        // Escapar campos que puedan contener comas
+        const escapeCsvField = (field: string) => {
+          if (field && (field.includes(',') || field.includes('"') || field.includes('\n'))) {
+            return `"${field.replace(/"/g, '""')}"`;
+          }
+          return field;
+        };
+        
+        // Añadir la línea al CSV
+        csvContent += [
+          sale.id,
+          formattedDate,
+          escapeCsvField(sale.clientName),
+          sale.totalAmount.toFixed(2),
+          status,
+          sale.paymentMethod,
+          sale.user ? escapeCsvField(sale.user.name) : '',
+          escapeCsvField(productNames)
+        ].join(',') + '\n';
+      });
+      
+      return {
+        success: true,
+        data: csvContent,
+        statusCode: 200
+      };
+    } catch (error) {
+      console.error('Error al exportar ventas a CSV:', error);
+      return {
+        success: false,
+        error: 'Error al exportar ventas a CSV',
+        statusCode: 500
+      };
+    }
+  }
+  
+  /**
    * Registra una nueva venta
    */
   static async createSale(data: SaleData): Promise<{ success: boolean; data?: any; error?: string; statusCode?: number; insufficientStock?: any }> {
